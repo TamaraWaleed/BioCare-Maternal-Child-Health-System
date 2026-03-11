@@ -1,0 +1,864 @@
+[BCS PROGRAM SNAPSHOT - SOURCE CODE]
+Generated: 2026-02-28
+
+================================================================================
+LAYOUT 1: AuthenticatedLayout.jsx
+--------------------------------------------------------------------------------
+import ApplicationLogo from '@/Components/ApplicationLogo';
+import Dropdown from '@/Components/Dropdown';
+import NavLink from '@/Components/NavLink';
+import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
+import Breadcrumbs from '@/Components/Breadcrumbs';
+import { Link, usePage } from '@inertiajs/react';
+import { useState, useEffect } from 'react';
+import Swal from 'sweetalert2';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+    faTachometerAlt, faComments, faBell, faMoon, faSun,
+    faUser, faSignOutAlt, faChevronDown, faBars, faTimes
+} from '@fortawesome/free-solid-svg-icons';
+import LanguageSwitcher from '@/Components/LanguageSwitcher';
+import { LanguageProvider } from '@/Contexts/LanguageContext';
+
+export default function AuthenticatedLayout({ header, children, breadcrumbs }) {
+    const { auth, flash } = usePage().props;
+    const user = auth.user;
+
+    const [showingNavigationDropdown, setShowingNavigationDropdown] =
+        useState(false);
+
+    // Theme Logic
+    const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+
+    useEffect(() => {
+        const root = window.document.documentElement;
+        if (theme === 'dark') {
+            root.classList.add('dark');
+        } else {
+            root.classList.remove('dark');
+        }
+        localStorage.setItem('theme', theme);
+    }, [theme]);
+
+    const toggleTheme = () => {
+        setTheme(theme === 'light' ? 'dark' : 'light');
+    };
+
+    // Unread Message Logic
+    const [unreadCount, setUnreadCount] = useState(0);
+    const [notifications, setNotifications] = useState([]);
+
+    const fetchUnreadData = async () => {
+        try {
+            // Fetch Count
+            const countResponse = await axios.get(route('chat.unread-count'));
+            const newCount = countResponse.data.count;
+
+            if (newCount > unreadCount && !route().current('chat.show')) {
+                Swal.fire({
+                    title: 'New Message!',
+                    text: `You have ${newCount} unread message${newCount > 1 ? 's' : ''}.`,
+                    icon: 'info',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 5000,
+                    timerProgressBar: true,
+                    background: theme === 'dark' ? '#2b2b2b' : '#fff',
+                    color: theme === 'dark' ? '#fff' : '#000',
+                });
+            }
+            setUnreadCount(newCount);
+
+            // Fetch Recent Notifications
+            if (newCount > 0) {
+                const notificationsResponse = await axios.get(route('chat.recent-notifications'));
+                setNotifications(notificationsResponse.data.notifications);
+            } else {
+                setNotifications([]);
+            }
+        } catch (error) {
+            console.error('Error fetching unread data:', error);
+        }
+    };
+
+    useEffect(() => {
+        fetchUnreadData();
+        const interval = setInterval(fetchUnreadData, 10000); // Poll every 10s
+        return () => clearInterval(interval);
+    }, [unreadCount, theme]);
+
+    useEffect(() => {
+        if (flash.success || flash.error) {
+            Swal.fire({
+                title: flash.success ? 'Success!' : 'Error!',
+                text: flash.success || flash.error,
+                icon: flash.success ? 'success' : 'error',
+                toast: true,
+                position: 'bottom-end',
+                showConfirmButton: false,
+                timer: 4000,
+                timerProgressBar: true,
+                background: theme === 'dark' ? '#2b2b2b' : '#fff',
+                color: theme === 'dark' ? '#fff' : '#000',
+                iconColor: flash.success ? '#107c10' : '#d11010',
+            });
+        }
+    }, [flash, theme]);
+
+    return (
+        <LanguageProvider>
+            <div className="min-h-screen bg-office-colorful-bg text-office-colorful-text dark:bg-office-black-bg dark:text-office-black-text transition-colors duration-300">
+                <nav className="sticky top-0 z-40 border-b border-office-colorful-border bg-office-colorful-surface dark:border-office-black-border dark:bg-office-black-surface transition-colors duration-300">
+                    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                        <div className="flex h-16 justify-between">
+                            <div className="flex">
+                                <div className="flex shrink-0 items-center">
+                                    <span className="cursor-not-allowed opacity-70">
+                                        <ApplicationLogo className="block h-9 w-auto fill-current text-office-colorful-ribbon dark:text-white" />
+                                    </span>
+                                </div>
+
+                                <div className="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+                                    <NavLink
+                                        href={route('dashboard')}
+                                        active={route().current('dashboard')}
+                                        className="text-office-colorful-text dark:text-office-black-text hover:text-office-colorful-ribbon dark:hover:text-white flex items-center"
+                                    >
+                                        <FontAwesomeIcon icon={faTachometerAlt} className="mr-2" />
+                                        Dashboard
+                                    </NavLink>
+                                    <span
+                                        className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium leading-5 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-70 flex items-center"
+                                    >
+                                        <FontAwesomeIcon icon={faComments} className="mr-2" />
+                                        Chat
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="hidden sm:ms-6 sm:flex sm:items-center">
+                                {/* Language Switcher */}
+                                <div className="mr-4">
+                                    <LanguageSwitcher />
+                                </div>
+
+                                {/* Notification Icon */}
+                                {/* Notification Dropdown */}
+                                <div className="relative mr-2">
+                                    <Dropdown>
+                                        <Dropdown.Trigger>
+                                            <span
+                                                className="rounded-full p-2 text-gray-400 cursor-not-allowed opacity-70 relative transition-colors"
+                                                title="Notifications (Disabled)"
+                                            >
+                                                <FontAwesomeIcon icon={faBell} className="w-5 h-5" />
+                                                {unreadCount > 0 && (
+                                                    <span className="absolute top-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-600/50 text-[10px] font-bold text-white ring-2 ring-office-colorful-surface dark:ring-office-black-surface">
+                                                        {unreadCount > 99 ? '99+' : unreadCount}
+                                                    </span>
+                                                )}
+                                            </span>
+                                        </Dropdown.Trigger>
+
+                                        <Dropdown.Content align="right" width="96" contentClasses="py-1 bg-office-surface dark:bg-office-black-surface border border-office-colorful-border dark:border-office-black-border shadow-xl">
+                                            <div className="px-4 py-2 text-xs font-semibold uppercase tracking-wider text-office-colorful-subtext dark:text-office-black-subtext border-b border-office-colorful-border dark:border-office-black-border">
+                                                Unread Messages
+                                            </div>
+                                            <div className="max-h-64 overflow-y-auto">
+                                                {notifications.length === 0 ? (
+                                                    <div className="p-4 text-center text-sm text-office-colorful-subtext dark:text-office-black-subtext">
+                                                        No new messages
+                                                    </div>
+                                                ) : (
+                                                    notifications.map((notif) => (
+                                                        <div
+                                                            key={notif.id}
+                                                            className="block px-4 py-3 opacity-70 cursor-not-allowed transition border-b border-office-colorful-border dark:border-office-black-border last:border-0"
+                                                        >
+                                                            <div className="flex items-center">
+                                                                <div className="flex-shrink-0 mr-3">
+                                                                    <div className="h-8 w-8 rounded-full bg-office-colorful-ribbon/50 dark:bg-office-accent/50 flex items-center justify-center text-white font-bold text-xs">
+                                                                        {notif.sender_name.charAt(0).toUpperCase()}
+                                                                    </div>
+                                                                </div>
+                                                                <div className="flex-1">
+                                                                    <div className="flex justify-between items-center mb-1">
+                                                                        <span className="font-bold text-sm text-office-colorful-text dark:text-white">
+                                                                            {notif.sender_name}
+                                                                        </span>
+                                                                        <span className="text-[10px] text-office-colorful-subtext dark:text-office-black-subtext">
+                                                                            {notif.created_at}
+                                                                        </span>
+                                                                    </div>
+                                                                    <p className="text-xs text-office-colorful-subtext dark:text-office-black-subtext line-clamp-1 italic">
+                                                                        "{notif.content}"
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))
+                                                )}
+                                            </div>
+                                            <span
+                                                className="block w-full px-4 py-2 text-center text-sm font-medium text-gray-400 dark:text-gray-500 cursor-not-allowed bg-office-colorful-bg/20 dark:bg-office-black-bg/30 mt-1"
+                                            >
+                                                View all messages
+                                            </span>
+                                        </Dropdown.Content>
+                                    </Dropdown>
+                                </div>
+
+                                {/* Theme Toggle Button (Desktop) */}
+                                 <span
+                                    className="mr-4 rounded-full p-2 text-gray-400 cursor-not-allowed opacity-70 font-bold transition-colors"
+                                    title="Toggle Theme (Disabled)"
+                                >
+                                    <FontAwesomeIcon icon={theme === 'light' ? faMoon : faSun} className="w-5 h-5" />
+                                </span>
+
+                                <div className="relative ms-3">
+                                    <Dropdown>
+                                        <Dropdown.Trigger>
+                                            <span className="inline-flex rounded-md">
+                                                <button
+                                                    type="button"
+                                                    className="inline-flex items-center rounded-md border border-transparent bg-office-surface px-3 py-2 text-sm font-medium leading-4 text-office-colorful-subtext transition duration-150 ease-in-out hover:text-office-colorful-text focus:outline-none dark:bg-office-black-surface dark:text-office-black-subtext dark:hover:text-white"
+                                                >
+                                                    {user.name}
+
+                                                    <FontAwesomeIcon icon={faChevronDown} className="ms-2 h-3 w-3" />
+                                                </button>
+                                            </span>
+                                        </Dropdown.Trigger>
+
+                                        <Dropdown.Content>
+                                            <div
+                                                className="block w-full px-4 py-2 text-left text-sm leading-5 text-gray-400 dark:text-gray-500 cursor-not-allowed flex items-center opacity-70"
+                                            >
+                                                <FontAwesomeIcon icon={faUser} className="mr-2 w-4" />
+                                                Profile
+                                            </div>
+                                            <Dropdown.Link href={route('logout')} method="post" as="button" className="flex items-center">
+                                                <FontAwesomeIcon icon={faSignOutAlt} className="mr-2 w-4" />
+                                                Log Out
+                                            </Dropdown.Link>
+                                        </Dropdown.Content>
+                                    </Dropdown>
+                                </div>
+                            </div>
+
+                            <div className="-me-2 flex items-center sm:hidden">
+                                <button
+                                    onClick={() =>
+                                        setShowingNavigationDropdown(
+                                            (previousState) => !previousState,
+                                        )
+                                    }
+                                    className="inline-flex items-center justify-center rounded-md p-2 text-office-colorful-subtext transition duration-150 ease-in-out hover:bg-office-colorful-bg hover:text-office-colorful-text focus:outline-none dark:text-office-black-subtext dark:hover:bg-office-black-bg dark:hover:text-white"
+                                >
+                                    <FontAwesomeIcon
+                                        icon={showingNavigationDropdown ? faTimes : faBars}
+                                        className="h-6 w-6"
+                                    />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div
+                        className={
+                            (showingNavigationDropdown ? 'block' : 'hidden') +
+                            ' sm:hidden'
+                        }
+                    >
+                        <div className="space-y-1 pb-3 pt-2">
+                            <ResponsiveNavLink
+                                href={route('dashboard')}
+                                active={route().current('dashboard')}
+                                className="text-office-colorful-text dark:text-office-black-text flex items-center"
+                            >
+                                <FontAwesomeIcon icon={faTachometerAlt} className="mr-2" />
+                                Dashboard
+                            </ResponsiveNavLink>
+                            <div
+                                className="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-70 flex items-center"
+                            >
+                                <FontAwesomeIcon icon={faComments} className="mr-2" />
+                                Chat
+                            </div>
+                        </div>
+
+                        <div className="border-t border-office-colorful-border pb-1 pt-4 dark:border-office-black-border">
+                            <div className="px-4 flex justify-between items-center">
+                                <div>
+                                    <div className="text-base font-medium text-office-colorful-text dark:text-office-black-text">
+                                        {user.name}
+                                    </div>
+                                    <div className="text-sm font-medium text-office-colorful-subtext dark:text-office-black-subtext">
+                                        {user.email}
+                                    </div>
+                                </div>
+                                {/* Notification Icon (Mobile) */}
+                                 <span
+                                    className="mr-2 rounded-full p-2 text-gray-400 cursor-not-allowed opacity-70 relative transition-colors"
+                                >
+                                    <FontAwesomeIcon icon={faBell} className="w-5 h-5" />
+                                    {unreadCount > 0 && (
+                                        <span className="absolute top-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-600/50 text-[10px] font-bold text-white ring-2 ring-office-colorful-surface dark:ring-office-black-surface">
+                                            {unreadCount > 99 ? '99+' : unreadCount}
+                                        </span>
+                                    )}
+                                </span>
+
+                                {/* Theme Toggle (Mobile) */}
+                                 <span
+                                    className="rounded-full p-2 text-gray-400 cursor-not-allowed opacity-70 transition-colors"
+                                >
+                                    <FontAwesomeIcon icon={theme === 'light' ? faMoon : faSun} className="w-5 h-5" />
+                                </span>
+                            </div>
+
+                            <div className="mt-3 space-y-1">
+                                <div className="block w-full ps-3 pe-4 py-2 text-base font-medium text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-70 flex items-center">
+                                    <FontAwesomeIcon icon={faUser} className="mr-2 w-4" />
+                                    Profile
+                                </div>
+                                <ResponsiveNavLink method="post" href={route('logout')} as="button" className="flex items-center">
+                                    <FontAwesomeIcon icon={faSignOutAlt} className="mr-2 w-4" />
+                                    Log Out
+                                </ResponsiveNavLink>
+                            </div>
+                        </div>
+                    </div>
+                </nav>
+
+                {header && (
+                    <header className="sticky top-16 z-30 bg-office-colorful-surface shadow-sm border-b border-office-colorful-border dark:bg-office-black-surface dark:border-office-black-border transition-colors duration-300">
+                        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+                            <Breadcrumbs items={breadcrumbs} />
+                            {header}
+                        </div>
+                    </header>
+                )}
+
+                <main className="transition-colors duration-300">{children}</main>
+
+            </div>
+        </LanguageProvider>
+    );
+}
+
+================================================================================
+LAYOUT 2: GuestLayout.jsx
+--------------------------------------------------------------------------------
+import ApplicationLogo from '@/Components/ApplicationLogo';
+import LanguageSwitcher from '@/Components/LanguageSwitcher';
+import { LanguageProvider } from '@/Contexts/LanguageContext';
+import { Link, usePage } from '@inertiajs/react';
+
+export default function GuestLayout({ children }) {
+    const { locale } = usePage().props;
+
+    return (
+        <LanguageProvider>
+            <div className="flex min-h-screen flex-col items-center bg-office-colorful-bg pt-6 sm:justify-center sm:pt-0 dark:bg-office-black-bg" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+                <div className="absolute top-4 right-4">
+                    <LanguageSwitcher />
+                </div>
+                <div className="flex justify-center">
+                    <Link href="/">
+                        <ApplicationLogo vertical={true} />
+                    </Link>
+                </div>
+
+                <div className="mt-6 w-full overflow-hidden bg-office-colorful-surface px-6 py-4 shadow-md sm:max-w-md sm:rounded-lg border border-office-colorful-border dark:bg-office-black-surface dark:border-office-black-border">
+                    {children}
+                </div>
+            </div>
+        </LanguageProvider>
+    );
+}
+
+================================================================================
+PAGE 1: Dashboard.jsx
+--------------------------------------------------------------------------------
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { Head } from '@inertiajs/react';
+
+export default function Dashboard({ auth }) {
+    return (
+        <AuthenticatedLayout
+            user={auth.user}
+            header={<h2 className="font-semibold text-xl text-office-colorful-text dark:text-office-black-text leading-tight">Dashboard</h2>}
+            breadcrumbs={[]}
+        >
+            <Head title="Dashboard" />
+
+            <div className="py-12 bg-office-colorful-bg dark:bg-office-black-bg min-h-screen">
+                <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
+                    <div className="overflow-hidden bg-office-colorful-surface shadow-sm sm:rounded-lg border border-office-colorful-border dark:bg-office-black-surface dark:border-office-black-border">
+                        <div className="p-6 text-office-colorful-text dark:text-office-black-text">
+                            You're logged in!
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </AuthenticatedLayout>
+    );
+}
+
+================================================================================
+PAGE 2: Doctor/Dashboard.jsx
+--------------------------------------------------------------------------------
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { Head, Link } from '@inertiajs/react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+    faUserNurse, faUserMd, faBaby, faWeight, faWalking,
+    faCalendarAlt, faSearch, faEye, faHospital
+} from '@fortawesome/free-solid-svg-icons';
+
+export default function Dashboard({ auth, mothers }) {
+    return (
+        <AuthenticatedLayout
+            user={auth.user}
+            header={<h2 className="font-semibold text-xl text-office-colorful-text dark:text-office-black-text leading-tight">Doctor Dashboard (Welcome {auth.user.name})</h2>}
+            breadcrumbs={[]}
+        >
+            <Head title="Doctor Dashboard" />
+
+            <div className="py-12 bg-office-colorful-bg dark:bg-office-black-bg min-h-screen">
+                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-6">
+                    {/* Sidebar / Quick Menu */}
+                    <div className="md:col-span-1 space-y-6">
+                        <div className="bg-office-colorful-surface shadow-sm sm:rounded-lg p-4 border border-office-colorful-border dark:bg-office-black-surface dark:border-office-black-border">
+                            <h3 className="font-bold text-office-colorful-text dark:text-white mb-3 uppercase text-xs tracking-wider flex items-center">
+                                <FontAwesomeIcon icon={faUserNurse} className="mr-2 text-office-colorful-ribbon dark:text-office-accent" />
+                                Patient Care
+                            </h3>
+                            <div className="flex flex-col space-y-2">
+                                <span className="text-sm text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-70 flex items-center">
+                                    <FontAwesomeIcon icon={faBaby} className="mr-2 w-4" /> Child Examination
+                                </span>
+                                <span className="text-sm text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-70 flex items-center">
+                                    <FontAwesomeIcon icon={faWeight} className="mr-2 w-4" /> Baby Measurements
+                                </span>
+                                <span className="text-sm text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-70 flex items-center">
+                                    <FontAwesomeIcon icon={faWalking} className="mr-2 w-4" /> Child Follow-up
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="bg-office-colorful-surface shadow-sm sm:rounded-lg p-4 border border-office-colorful-border dark:bg-office-black-surface dark:border-office-black-border">
+                            <h3 className="font-bold text-office-colorful-text dark:text-white mb-3 uppercase text-xs tracking-wider flex items-center">
+                                <FontAwesomeIcon icon={faHospital} className="mr-2 text-office-colorful-ribbon dark:text-office-accent" />
+                                Clinic Operations
+                            </h3>
+                            <div className="flex flex-col space-y-2">
+                                <span className="text-sm text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-70 flex items-center">
+                                    <FontAwesomeIcon icon={faCalendarAlt} className="mr-2 w-4" /> Schedule
+                                </span>
+                                <span className="text-sm text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-70 flex items-center">
+                                    <FontAwesomeIcon icon={faSearch} className="mr-2 w-4" /> Search Patients
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Main Content */}
+                    <div className="md:col-span-3">
+                        <div className="bg-office-colorful-surface overflow-hidden shadow-sm sm:rounded-lg p-6 border border-office-colorful-border dark:bg-office-black-surface dark:border-office-black-border">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-lg font-bold text-office-colorful-text dark:text-white">Registered Mothers & Children</h3>
+                            </div>
+
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full leading-normal">
+                                    <thead>
+                                        <tr>
+                                            <th className="px-5 py-3 border-b-2 border-office-colorful-border bg-office-colorful-bg text-left text-xs font-semibold text-office-colorful-subtext uppercase tracking-wider dark:bg-office-black-bg dark:border-office-black-border dark:text-office-black-subtext">Mother</th>
+                                            <th className="px-5 py-3 border-b-2 border-office-colorful-border bg-office-colorful-bg text-left text-xs font-semibold text-office-colorful-subtext uppercase tracking-wider dark:bg-office-black-bg dark:border-office-black-border dark:text-office-black-subtext">Children</th>
+                                            <th className="px-5 py-3 border-b-2 border-office-colorful-border bg-office-colorful-bg text-left text-xs font-semibold text-office-colorful-subtext uppercase tracking-wider dark:bg-office-black-bg dark:border-office-black-border dark:text-office-black-subtext">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="bg-office-colorful-surface dark:bg-office-black-surface">
+                                        {mothers && mothers.data && mothers.data.map((mother) => (
+                                            <tr key={mother.id}>
+                                                <td className="px-5 py-5 border-b border-office-colorful-border text-sm dark:border-office-black-border">
+                                                    <p className="text-office-colorful-text font-semibold dark:text-white">{mother.name}</p>
+                                                    <p className="text-office-colorful-subtext text-xs dark:text-office-black-subtext">{mother.email}</p>
+                                                </td>
+                                                <td className="px-5 py-5 border-b border-office-colorful-border text-sm dark:border-office-black-border">
+                                                    {mother.children && mother.children.length > 0 ? (
+                                                        <div className="flex flex-wrap gap-1">
+                                                            {mother.children.map(child => (
+                                                                <span key={child.id} className="bg-office-colorful-bg text-office-colorful-ribbon text-xs px-2 py-1 rounded-full dark:bg-office-black-bg dark:text-office-accent">{child.name}</span>
+                                                            ))}
+                                                        </div>
+                                                    ) : <span className="text-office-colorful-subtext text-xs dark:text-office-black-subtext">No children</span>}
+                                                </td>
+                                                <td className="px-5 py-5 border-b border-office-colorful-border text-sm dark:border-office-black-border">
+                                                    <span
+                                                        className="text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-70 flex items-center"
+                                                    >
+                                                        <FontAwesomeIcon icon={faEye} className="mr-1" /> View
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </AuthenticatedLayout>
+    );
+}
+
+================================================================================
+PAGE 3: Nurse/Dashboard.jsx
+--------------------------------------------------------------------------------
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { Head, Link } from '@inertiajs/react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+    faUser, faUsersCog, faCommentMedical, faBullhorn,
+    faBaby, faStethoscope, faUserShield, faSyringe, faClipboardCheck,
+    faFemale, faBabyCarriage, faHistory, faExclamationTriangle,
+    faMicroscope, faHeartbeat, faHandsHelping,
+    faUsers, faUserDoctor, faVenus, faShieldAlt, faCalendarAlt
+} from '@fortawesome/free-solid-svg-icons';
+
+export default function Dashboard({ auth, usersCount, doctorsCount, mothersCount }) {
+    return (
+        <AuthenticatedLayout
+            user={auth.user}
+            header={<h2 className="font-semibold text-xl text-office-colorful-text dark:text-office-black-text leading-tight">Nurse Dashboard (Welcome {auth.user.name})</h2>}
+            breadcrumbs={[]}
+        >
+            <Head title="Nurse Dashboard" />
+
+            <div className="py-12 min-h-screen bg-office-colorful-bg dark:bg-office-black-bg">
+                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-6">
+
+                    {/* Sidebar / Quick Menu */}
+                    <div className="md:col-span-1 space-y-6">
+
+                        {/* Admin & User Info Group */}
+                        <div className="bg-office-colorful-surface shadow-sm sm:rounded-lg p-4 border border-office-colorful-border dark:bg-office-black-surface dark:border-office-black-border">
+                            <h3 className="font-bold text-office-colorful-text dark:text-white mb-3 uppercase text-xs tracking-wider flex items-center">
+                                <FontAwesomeIcon icon={faShieldAlt} className="mr-2 text-office-colorful-ribbon dark:text-office-accent" />
+                                Admin Info
+                            </h3>
+                            <div className="flex flex-col space-y-2">
+                                <span className="text-sm text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-70 flex items-center">
+                                    <FontAwesomeIcon icon={faUser} className="mr-2 w-4" /> Profile Info
+                                </span>
+                                <span className="text-sm text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-70 flex items-center">
+                                    <FontAwesomeIcon icon={faUsersCog} className="mr-2 w-4" /> Manage Users
+                                </span>
+                                <span className="text-sm text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-70 flex items-center">
+                                    <FontAwesomeIcon icon={faCommentMedical} className="mr-2 w-4" /> Message Center
+                                </span>
+                                <span className="text-sm text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-70 flex items-center font-bold">
+                                    <FontAwesomeIcon icon={faCalendarAlt} className="mr-2 w-4 text-office-colorful-ribbon dark:text-office-accent" /> Clinic Schedule
+                                </span>
+                                <span className="text-sm text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-70 flex items-center">
+                                    <FontAwesomeIcon icon={faBullhorn} className="mr-2 w-4" /> Create Ads
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Child Tasks Group */}
+                        <div className="bg-office-colorful-surface shadow-sm sm:rounded-lg p-4 border border-office-colorful-border dark:bg-office-black-surface dark:border-office-black-border">
+                            <h3 className="font-bold text-office-colorful-text dark:text-white mb-3 uppercase text-xs tracking-wider flex items-center">
+                                <FontAwesomeIcon icon={faBaby} className="mr-2 text-office-colorful-ribbon dark:text-office-accent" />
+                                Child Tasks
+                            </h3>
+                            <div className="flex flex-col space-y-2">
+                                <span className="text-sm text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-70 flex items-center">
+                                    <FontAwesomeIcon icon={faUsers} className="mr-2 w-4" /> Manage Children
+                                </span>
+                                <span className="text-sm text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-70 flex items-center">
+                                    <FontAwesomeIcon icon={faStethoscope} className="mr-2 w-4" /> Newborn Assessment
+                                </span>
+                                <span className="text-sm text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-70 flex items-center">
+                                    <FontAwesomeIcon icon={faUserShield} className="mr-2 w-4" /> Preventive Exam
+                                </span>
+                                <span className="text-sm text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-70 flex items-center">
+                                    <FontAwesomeIcon icon={faSyringe} className="mr-2 w-4" /> Vaccination
+                                </span>
+                                <span className="text-sm text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-70 flex items-center">
+                                    <FontAwesomeIcon icon={faClipboardCheck} className="mr-2 w-4" /> Referrals
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Mothers Info Group */}
+                        <div className="bg-office-colorful-surface shadow-sm sm:rounded-lg p-4 border border-office-colorful-border dark:bg-office-black-surface dark:border-office-black-border">
+                            <h3 className="font-bold text-office-colorful-text dark:text-white mb-3 uppercase text-xs tracking-wider flex items-center">
+                                <FontAwesomeIcon icon={faFemale} className="mr-2 text-office-colorful-ribbon dark:text-office-accent" />
+                                Mothers Info
+                            </h3>
+                            <div className="flex flex-col space-y-2">
+                                <span className="text-sm text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-70 flex items-center">
+                                    <FontAwesomeIcon icon={faVenus} className="mr-2 w-4" /> All Mothers
+                                </span>
+                                <span className="text-sm text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-70 flex items-center">
+                                    <FontAwesomeIcon icon={faBabyCarriage} className="mr-2 w-4" /> Prev. Pregnancies
+                                </span>
+                                <span className="text-sm text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-70 flex items-center">
+                                    <FontAwesomeIcon icon={faHistory} className="mr-2 w-4" /> Obstetrical Risks
+                                </span>
+                                <span className="text-sm text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-70 flex items-center">
+                                    <FontAwesomeIcon icon={faExclamationTriangle} className="mr-2 w-4" /> Current Risks
+                                </span>
+                                <span className="text-sm text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-70 flex items-center">
+                                    <FontAwesomeIcon icon={faMicroscope} className="mr-2 w-4" /> USS Exam
+                                </span>
+                                <span className="text-sm text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-70 flex items-center">
+                                    <FontAwesomeIcon icon={faHeartbeat} className="mr-2 w-4" /> Postnatal Exam
+                                </span>
+                                <span className="text-sm text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-70 flex items-center">
+                                    <FontAwesomeIcon icon={faHandsHelping} className="mr-2 w-4" /> Family Planning
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Main Content Area (Stats) */}
+                    <div className="md:col-span-3">
+                        <div className="bg-office-colorful-surface overflow-hidden shadow-sm sm:rounded-lg p-6 mb-6 border border-office-colorful-border dark:bg-office-black-surface dark:border-office-black-border">
+                            <h3 className="text-lg font-bold text-office-colorful-text dark:text-white mb-4">Dashboard Overview</h3>
+                            {/* Stats Grid */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div className="bg-office-colorful-bg overflow-hidden shadow-sm sm:rounded-lg p-6 border border-office-colorful-border dark:bg-office-black-bg dark:border-office-black-border flex items-center justify-between">
+                                    <div>
+                                        <div className="text-office-colorful-ribbon text-sm uppercase font-bold tracking-wider dark:text-office-accent">Total Users</div>
+                                        <div className="text-3xl font-extrabold text-office-colorful-text dark:text-white mt-2">{usersCount}</div>
+                                    </div>
+                                    <FontAwesomeIcon icon={faUsers} className="text-4xl text-office-colorful-ribbon/20 dark:text-office-accent/20" />
+                                </div>
+                                <div className="bg-office-colorful-bg overflow-hidden shadow-sm sm:rounded-lg p-6 border border-office-colorful-border dark:bg-office-black-bg dark:border-office-black-border flex items-center justify-between">
+                                    <div>
+                                        <div className="text-office-colorful-ribbon text-sm uppercase font-bold tracking-wider dark:text-office-accent">Doctors</div>
+                                        <div className="text-3xl font-extrabold text-office-colorful-text dark:text-white mt-2">{doctorsCount}</div>
+                                    </div>
+                                    <FontAwesomeIcon icon={faUserDoctor} className="text-4xl text-office-colorful-ribbon/20 dark:text-office-accent/20" />
+                                </div>
+                                <div className="bg-office-colorful-bg overflow-hidden shadow-sm sm:rounded-lg p-6 border border-office-colorful-border dark:bg-office-black-bg dark:border-office-black-border flex items-center justify-between">
+                                    <div>
+                                        <div className="text-office-colorful-ribbon text-sm uppercase font-bold tracking-wider dark:text-office-accent">Mothers</div>
+                                        <div className="text-3xl font-extrabold text-office-colorful-text dark:text-white mt-2">{mothersCount}</div>
+                                    </div>
+                                    <FontAwesomeIcon icon={faVenus} className="text-4xl text-office-colorful-ribbon/20 dark:text-office-accent/20" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-office-colorful-surface overflow-hidden shadow-sm sm:rounded-lg p-6 border border-office-colorful-border dark:bg-office-black-surface dark:border-office-black-border">
+                            <h3 className="text-lg font-bold text-office-colorful-text dark:text-white mb-4">Quick Shortcuts</h3>
+                            <div className="flex gap-4">
+                                <span
+                                    className="px-4 py-2 bg-gray-400 text-white rounded-md cursor-not-allowed opacity-70"
+                                >
+                                    Manage Users
+                                </span>
+                                <span
+                                    className="px-4 py-2 bg-office-colorful-bg text-gray-400 rounded-md cursor-not-allowed opacity-70 dark:bg-office-black-bg dark:text-office-black-subtext"
+                                >
+                                    Create Announcement
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </AuthenticatedLayout>
+    );
+}
+
+================================================================================
+PAGE 4: Mother/Dashboard.jsx (Buttons Disabled)
+--------------------------------------------------------------------------------
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { Head, Link } from '@inertiajs/react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+    faHeartbeat, faBabyCarriage, faExclamationTriangle, faMicroscope,
+    faHandsHelping, faCalendarAlt, faSyringe, faWeight,
+    faBookMedical, faShieldAlt, faBaby, faBullhorn, faDownload
+} from '@fortawesome/free-solid-svg-icons';
+
+export default function Dashboard({ auth, mother, announcements, upcomingVisits }) {
+    return (
+        <AuthenticatedLayout
+            user={auth.user}
+            header={<h2 className="font-semibold text-xl text-office-colorful-text dark:text-office-black-text leading-tight">Mother Dashboard (Welcome {auth.user.name})</h2>}
+            breadcrumbs={[]}
+        >
+            <Head title="Mother Dashboard" />
+
+            <div className="py-12 bg-office-colorful-bg dark:bg-office-black-bg min-h-screen">
+                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-6">
+
+                    {/* Sidebar Links */}
+                    <div className="md:col-span-1 space-y-6">
+                        <div className="bg-office-colorful-surface shadow-sm sm:rounded-lg p-4 border border-office-colorful-border dark:bg-office-black-surface dark:border-office-black-border">
+                            <h3 className="font-bold text-office-colorful-text dark:text-white mb-3 uppercase text-xs tracking-wider flex items-center">
+                                <FontAwesomeIcon icon={faHeartbeat} className="mr-2 text-office-colorful-ribbon dark:text-office-accent" />
+                                My Health
+                            </h3>
+                            <div className="flex flex-col space-y-2">
+                                <span className="text-sm text-gray-400 dark:text-gray-500 cursor-not-allowed flex items-center opacity-70">
+                                    <FontAwesomeIcon icon={faHeartbeat} className="mr-2 w-4" /> Medical Examination
+                                </span>
+                                <span className="text-sm text-gray-400 dark:text-gray-500 cursor-not-allowed flex items-center opacity-70">
+                                    <FontAwesomeIcon icon={faBabyCarriage} className="mr-2 w-4" /> Prev. Pregnancies
+                                </span>
+                                <span className="text-sm text-gray-400 dark:text-gray-500 cursor-not-allowed flex items-center opacity-70">
+                                    <FontAwesomeIcon icon={faExclamationTriangle} className="mr-2 w-4" /> Risks & History
+                                </span>
+                                <span className="text-sm text-gray-400 dark:text-gray-500 cursor-not-allowed flex items-center opacity-70">
+                                    <FontAwesomeIcon icon={faMicroscope} className="mr-2 w-4" /> USS Examination
+                                </span>
+                                <span className="text-sm text-gray-400 dark:text-gray-500 cursor-not-allowed flex items-center opacity-70">
+                                    <FontAwesomeIcon icon={faHandsHelping} className="mr-2 w-4" /> Family Planning
+                                </span>
+                                <span className="text-sm text-gray-400 dark:text-gray-500 cursor-not-allowed flex items-center opacity-70">
+                                    <FontAwesomeIcon icon={faCalendarAlt} className="mr-2 w-4" /> Visit Schedule
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="bg-office-colorful-surface shadow-sm sm:rounded-lg p-4 border border-office-colorful-border dark:bg-office-black-surface dark:border-office-black-border">
+                            <h3 className="font-bold text-office-colorful-text dark:text-white mb-3 uppercase text-xs tracking-wider flex items-center">
+                                <FontAwesomeIcon icon={faBaby} className="mr-2 text-office-colorful-ribbon dark:text-office-accent" />
+                                Children Info
+                            </h3>
+                            <div className="flex flex-col space-y-2">
+                                <span className="text-sm text-gray-400 dark:text-gray-500 cursor-not-allowed flex items-center opacity-70">
+                                    <FontAwesomeIcon icon={faSyringe} className="mr-2 w-4" /> Vaccination Schedule
+                                </span>
+                                <span className="text-sm text-gray-400 dark:text-gray-500 cursor-not-allowed flex items-center opacity-70">
+                                    <FontAwesomeIcon icon={faWeight} className="mr-2 w-4" /> Daily Measurements
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="bg-office-colorful-surface shadow-sm sm:rounded-lg p-4 border border-office-colorful-border dark:bg-office-black-surface dark:border-office-black-border">
+                            <h3 className="font-bold text-office-colorful-text dark:text-white mb-3 uppercase text-xs tracking-wider flex items-center">
+                                <FontAwesomeIcon icon={faBookMedical} className="mr-2 text-office-colorful-ribbon dark:text-office-accent" />
+                                Resources
+                            </h3>
+                            <div className="flex flex-col space-y-2">
+                                <span className="text-sm text-gray-400 dark:text-gray-500 cursor-not-allowed flex items-center opacity-70">
+                                    <FontAwesomeIcon icon={faBookMedical} className="mr-2 w-4" /> Health Guides
+                                </span>
+                                <span className="text-sm text-gray-400 dark:text-gray-500 cursor-not-allowed flex items-center opacity-70">
+                                    <FontAwesomeIcon icon={faShieldAlt} className="mr-2 w-4" /> Safety Tips
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Main Dashboard Content */}
+                    <div className="md:col-span-3">
+                        <div className="bg-office-colorful-surface overflow-hidden shadow-sm sm:rounded-lg p-6 mb-6 border border-office-colorful-border dark:bg-office-black-surface dark:border-office-black-border">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-lg font-bold text-office-colorful-text dark:text-white">Visit Schedule</h3>
+                                <span className="text-sm text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-70">View All</span>
+                            </div>
+                            {upcomingVisits && upcomingVisits.length > 0 ? (
+                                <div className="space-y-4">
+                                    {upcomingVisits.map((visit) => (
+                                        <div key={visit.id} className="flex items-center p-3 bg-office-colorful-bg rounded-lg dark:bg-office-black-bg border border-transparent hover:border-office-colorful-border dark:hover:border-office-black-border transition">
+                                            <div className="bg-white p-2 rounded-md shadow-sm mr-4 dark:bg-office-black-surface">
+                                                <div className="text-xs font-bold text-office-colorful-ribbon dark:text-office-accent uppercase text-center">
+                                                    {new Date(visit.appointment_date).toLocaleString('default', { month: 'short' })}
+                                                </div>
+                                                <div className="text-lg font-bold text-office-colorful-text dark:text-white text-center">
+                                                    {new Date(visit.appointment_date).getDate()}
+                                                </div>
+                                            </div>
+                                            <div className="flex-1">
+                                                <h4 className="font-bold text-office-colorful-text dark:text-white">{visit.notes || 'Routine Checkup'}</h4>
+                                                <p className="text-xs text-office-colorful-subtext dark:text-office-black-subtext">{new Date(visit.appointment_date).toDateString()}</p>
+                                            </div>
+                                            <span className={`px-2 py-1 rounded text-[10px] font-bold ${visit.status === 'completed' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'}`}>
+                                                {visit.status.toUpperCase()}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-office-colorful-subtext italic dark:text-office-black-subtext">No upcoming visits scheduled.</p>
+                            )}
+                        </div>
+
+                        <div className="bg-office-colorful-surface overflow-hidden shadow-sm sm:rounded-lg p-6 mb-6 border border-office-colorful-border dark:bg-office-black-surface dark:border-office-black-border">
+                            <h3 className="text-lg font-bold text-office-colorful-text dark:text-white mb-2">My Children</h3>
+                            {mother.children && mother.children.length > 0 ? (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    {mother.children.map((child) => (
+                                        <div key={child.id} className="border border-office-colorful-border rounded-lg p-4 hover:shadow-md transition dark:border-office-black-border dark:bg-office-black-bg flex items-center">
+                                            <div className="bg-office-colorful-bg p-3 rounded-full mr-4 dark:bg-office-black-bg">
+                                                <FontAwesomeIcon icon={faBaby} className="text-office-colorful-ribbon text-xl dark:text-office-accent" />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-bold text-lg text-office-colorful-text dark:text-white">{child.name}</h4>
+                                                <p className="text-sm text-office-colorful-subtext dark:text-office-black-subtext">DOB: {child.birth_date}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-office-colorful-subtext italic dark:text-office-black-subtext">No children registered yet.</p>
+                            )}
+                        </div>
+
+                        {/* Recent Announcements (Main Area) */}
+                        <div className="bg-office-colorful-surface shadow-sm sm:rounded-lg p-6 mb-6 border border-office-colorful-border dark:bg-office-black-surface dark:border-office-black-border">
+                            <h3 className="text-lg font-bold text-office-colorful-text dark:text-white mb-4 flex items-center">
+                                <FontAwesomeIcon icon={faBullhorn} className="mr-2 text-office-colorful-ribbon dark:text-office-accent" />
+                                Latest Announcements
+                            </h3>
+                            {announcements && announcements.length > 0 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {announcements.map((ad) => (
+                                        <div key={ad.id} className="p-4 bg-office-colorful-bg border-l-4 border-office-colorful-ribbon dark:bg-office-black-bg dark:border-office-accent">
+                                            <h4 className="font-bold text-office-colorful-text dark:text-white">{ad.title}</h4>
+                                            <p className="text-sm text-office-colorful-subtext dark:text-office-black-subtext mt-2">{ad.content}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-office-colorful-subtext italic dark:text-office-black-subtext">No new announcements from medical staff.</p>
+                            )}
+                        </div>
+
+                        {/* Featured App Ad / Announcement Hero */}
+                        <div className="bg-office-colorful-ribbon rounded-lg p-6 text-white shadow-lg relative overflow-hidden dark:bg-office-accent">
+                            <div className="relative z-10 w-2/3">
+                                <h3 className="text-xl font-extrabold mb-2 uppercase tracking-wide">BCS Modern Mobile</h3>
+                                <p className="text-sm opacity-90 mb-4">Download our mobile app to track your child's growth on the go and get real-time health alerts.</p>
+                                <button disabled className="bg-white/50 text-office-colorful-ribbon px-4 py-2 rounded-md text-xs font-bold cursor-not-allowed flex items-center">
+                                    <FontAwesomeIcon icon={faDownload} className="mr-2" /> Learn More
+                                </button>
+                            </div>
+                            {/* Abstract Decorative Element */}
+                            <div className="absolute right-[-20%] top-[-20%] w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </AuthenticatedLayout>
+    );
+}
+
+================================================================================
+[END OF SNAPSHOT]
