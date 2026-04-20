@@ -1,0 +1,96 @@
+[BCS INTERFACE BACKUP - STATIC SNAPSHOT]
+Generated: 2026-02-26
+
+================================================================================
+COMPONENT 1: DOCTOR DASHBOARD
+--------------------------------------------------------------------------------
+Layout: AuthenticatedLayout
+Header: Doctor Dashboard (Welcome {User})
+
+[SIDEBAR]
+- PATIENT CARE:
+    * Child Examination
+    * Baby Measurements
+    * Child Follow-up
+- CLINIC OPERATIONS:
+    * Schedule
+    * Search Patients
+
+[MAIN CONTENT]
+- Registered Mothers & Children Table
+    * Columns: Mother, Children, Actions
+    * Rows (Example):
+        - Mother: Name, Email
+        - Children: Child Name (Tag)
+        - Actions: View (Link)
+
+================================================================================
+COMPONENT 2: NURSE DASHBOARD
+--------------------------------------------------------------------------------
+Layout: AuthenticatedLayout
+Header: Nurse Dashboard (Welcome {User})
+
+[SIDEBAR]
+- ADMIN INFO:
+    * Profile Info
+    * Manage Users
+    * Message Center
+    * Clinic Schedule
+    * Create Ads
+- CHILD TASKS:
+    * Manage Children
+    * Newborn Assessment
+    * Preventive Exam
+    * Vaccination
+    * Referrals
+- MOTHERS INFO:
+    * All Mothers
+    * Prev. Pregnancies
+    * Obstetrical Risks
+    * Current Risks
+    * USS Exam
+    * Postnatal Exam
+    * Family Planning
+
+[MAIN CONTENT]
+- Dashboard Overview (Stats):
+    * Total Users: {usersCount}
+    * Doctors: {doctorsCount}
+    * Mothers: {mothersCount}
+- Quick Shortcuts:
+    * Manage Users (Button)
+    * Create Announcement (Button)
+
+================================================================================
+COMPONENT 3: MOTHER DASHBOARD
+--------------------------------------------------------------------------------
+Layout: AuthenticatedLayout
+Header: Mother Dashboard (Welcome {User})
+
+[SIDEBAR]
+- MY HEALTH:
+    * Medical Examination
+    * Prev. Pregnancies
+    * Risks & History
+    * USS Examination
+    * Family Planning
+    * Visit Schedule
+- CHILDREN INFO:
+    * Vaccination Schedule
+    * Daily Measurements
+- RESOURCES:
+    * Health Guides
+    * Safety Tips
+
+[MAIN CONTENT]
+- Visit Schedule:
+    * Displays upcoming visits with month/day/note/status.
+- My Children:
+    * Displays list of children with name and DOB.
+- Latest Announcements:
+    * Displays grid of announcements with title and content.
+- Promo:
+    * BCS Modern Mobile Download Advertisement
+
+================================================================================
+[END OF BACKUP]

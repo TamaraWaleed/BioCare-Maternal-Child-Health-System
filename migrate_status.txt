@@ -1,0 +1,20 @@
+
+  Migration name  Batch / Status  
+  0001_01_01_000000_create_users_table  Pending  
+  0001_01_01_000001_create_cache_table  [2] Ran  
+  0001_01_01_000002_create_jobs_table  [3] Ran  
+  2026_01_16_130626_create_bcs_tables  Pending  
+  2026_01_16_162534_create_missing_old_tables  Pending  
+  2026_01_16_163343_create_messages_table  Pending  
+  2026_02_02_073939_update_admin_role_to_nurse  Pending  
+  2026_02_04_201155_add_title_to_announcements_table  Pending  
+  2026_02_07_094000_drop_remember_token_from_users_table  Pending  
+  2026_02_07_112000_fix_foreign_keys  Pending  
+  2026_02_08_103337_add_photo_path_to_doctor_profiles  Pending  
+  2026_02_08_110422_create_nurse_profiles_table  Pending  
+  2026_02_08_111545_add_fields_to_mother_profiles_table  Pending  
+  2026_02_14_092807_add_fields_to_antenatal_records_table  Pending  
+  2026_02_14_103246_change_gestational_age_date_to_varchar_in_antenatal_records_table  Pending  
+  2026_02_16_085556_add_time_to_appointments_table  Pending  
+  2026_02_16_100256_drop_appointment_time_from_appointments_table  Pending  
+
