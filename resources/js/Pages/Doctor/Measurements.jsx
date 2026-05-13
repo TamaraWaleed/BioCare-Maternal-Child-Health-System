@@ -18,6 +18,15 @@ export default function Measurements({ auth }) {
         { age: '6m', weight: 8.2, maleAvg: 7.9, femaleAvg: 7.3 },
     ]);
 
+    const [heightData, setHeightData] = useState([
+        { age: '0m', height: 50.5, maleAvg: 49.9, femaleAvg: 49.1 },
+        { age: '1m', height: 54.0, maleAvg: 54.7, femaleAvg: 53.7 },
+        { age: '2m', height: 58.2, maleAvg: 58.4, femaleAvg: 57.1 },
+        { age: '3m', height: 61.5, maleAvg: 61.4, femaleAvg: 59.8 },
+        { age: '4m', height: 63.8, maleAvg: 63.9, femaleAvg: 62.1 },
+        { age: '6m', height: 67.5, maleAvg: 67.6, femaleAvg: 65.7 },
+    ]);
+
     const { data, setData, post, processing, errors } = useForm({
         child_id: '',
         date: '',
@@ -29,12 +38,33 @@ export default function Measurements({ auth }) {
 
     const submit = (e) => {
         e.preventDefault();
-        // Placeholder route
-        // post(route('doctor.measurements.store'));
+        
+        if (data.age_months && data.weight && data.height) {
+            const ageLabel = data.age_months + 'm';
+            
+            // Add new data points dynamically
+            setWeightData(prev => [...prev, {
+                age: ageLabel,
+                weight: parseFloat(data.weight),
+                maleAvg: 8.5, // Dummy standard value
+                femaleAvg: 8.0  // Dummy standard value
+            }]);
+            
+            setHeightData(prev => [...prev, {
+                age: ageLabel,
+                height: parseFloat(data.height),
+                maleAvg: 71.0, // Dummy standard value
+                femaleAvg: 69.5  // Dummy standard value
+            }]);
+            
+            // Clear form
+            setData({ ...data, age_months: '', weight: '', height: '' });
+        }
+
         const theme = localStorage.getItem('theme') || 'light';
         Swal.fire({
             title: 'Saved!',
-            text: 'Measurement saved (demo)',
+            text: 'Measurement saved & charts updated (demo)',
             icon: 'success',
             background: theme === 'dark' ? '#2b2b2b' : '#fff',
             color: theme === 'dark' ? '#fff' : '#000',
@@ -131,11 +161,21 @@ export default function Measurements({ auth }) {
                             </div>
                         </div>
 
-                        {/* Height Chart - Placeholder */}
+                        {/* Height Chart */}
                         <div className="bg-office-colorful-surface overflow-hidden shadow-sm sm:rounded-lg p-6 border border-office-colorful-border dark:bg-office-black-surface dark:border-office-black-border">
-                            <h3 className="text-lg font-bold mb-4 text-office-colorful-text dark:text-white">Height for Age (Placeholder)</h3>
-                            <div className="h-64 flex items-center justify-center bg-office-colorful-bg border border-dashed border-office-colorful-border dark:bg-office-black-bg dark:border-office-black-border">
-                                <p className="text-office-colorful-subtext dark:text-office-black-subtext">Select a child to view height charts</p>
+                            <h3 className="text-lg font-bold mb-4 text-office-colorful-text dark:text-white">Height for Age (0-6 months)</h3>
+                            <div className="h-64">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <LineChart data={heightData}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke={localStorage.getItem('theme') === 'dark' ? '#404040' : '#e5e5e5'} />
+                                        <XAxis dataKey="age" stroke={localStorage.getItem('theme') === 'dark' ? '#e6e6e6' : '#333'} />
+                                        <YAxis stroke={localStorage.getItem('theme') === 'dark' ? '#e6e6e6' : '#333'} />
+                                        <Tooltip contentStyle={{ backgroundColor: localStorage.getItem('theme') === 'dark' ? '#262626' : '#fff', borderColor: localStorage.getItem('theme') === 'dark' ? '#404040' : '#e5e5e5' }} />
+                                        <Legend />
+                                        <Line type="monotone" dataKey="maleAvg" stroke="#2B7CBD" name="Avg Male" strokeDasharray="5 5" />
+                                        <Line type="monotone" dataKey="height" stroke="#d13b3b" name="Child Height" strokeWidth={2} />
+                                    </LineChart>
+                                </ResponsiveContainer>
                             </div>
                         </div>
                     </div>

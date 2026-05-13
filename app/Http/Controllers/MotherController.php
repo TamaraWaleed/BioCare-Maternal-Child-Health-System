@@ -15,7 +15,7 @@ class MotherController extends Controller
         $announcements = \App\Models\Announcement::latest()->take(3)->get();
         
         $upcomingVisits = \App\Models\Appointment::where('mother_user_id', $user->id)
-            ->where('appointment_date', '>=', now()->toDateString())
+            ->where('status', 'scheduled')
             ->orderBy('appointment_date', 'asc')
             ->take(3)
             ->get();

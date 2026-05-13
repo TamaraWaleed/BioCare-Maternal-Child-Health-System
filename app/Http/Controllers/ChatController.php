@@ -6,6 +6,7 @@ use App\Models\Message;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 use Inertia\Inertia;
 
 class ChatController extends Controller
@@ -32,13 +33,13 @@ class ChatController extends Controller
         // Fetch conversation
         $messages = Message::where(function ($query) use ($user) {
             $query->where('sender_id', Auth::id())
-                  ->where('receiver_id', $user->id);
+                ->where('receiver_id', $user->id);
         })->orWhere(function ($query) use ($user) {
             $query->where('sender_id', $user->id)
-                  ->where('receiver_id', Auth::id());
+                ->where('receiver_id', Auth::id());
         })
-        ->orderBy('created_at', 'asc')
-        ->get();
+            ->orderBy('created_at', 'asc')
+            ->get();
 
         return Inertia::render('Chat/Show', [
             'friend' => $user,
@@ -99,5 +100,46 @@ class ChatController extends Controller
         ]);
 
         return back();
+    }
+
+    public function askAi(Request $request)
+    {
+        $request->validate([
+            'prompt' => 'required|string',
+        ]);
+
+        $apiKey = env('GEMINI_API_KEY');
+
+        if (!$apiKey) {
+            return response()->json(['error' => 'Gemini API Key is not configured in the server.'], 500);
+        }
+
+        $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={$apiKey}";
+
+        try {
+            $response = Http::withoutVerifying()->post($url, [
+                'contents' => [
+                    [
+                        'parts' => [
+                            ['text' => $request->input('prompt')]
+                        ]
+                    ]
+                ]
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                $textResponse = $data['candidates'][0]['content']['parts'][0]['text'] ?? 'Sorry, I could not understand that.';
+
+                return response()->json(['reply' => $textResponse]);
+            }
+
+            return response()->json([
+                'error' => 'Error communicating with AI: ' . $response->body()
+            ], 500);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'An error occurred: ' . $e->getMessage()], 500);
+        }
     }
 }

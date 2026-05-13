@@ -98,8 +98,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/appointments/{appointment}', [\App\Http\Controllers\NurseMedicalController::class, 'deleteAppointment'])->name('nurse.appointments.delete');
     });
 
-    Route::middleware('auth')->group(function () {
+    Route::middleware(['auth', 'role:mother'])->group(function () {
         Route::get('/chatbot', [\App\Http\Controllers\ChatController::class, 'index'])->name('chatbot.index');
+        Route::post('/chatbot/ask', [\App\Http\Controllers\ChatController::class, 'askAi'])->name('chatbot.ask');
+    });
+
+    Route::middleware('auth')->group(function () {
         Route::get('/chatbot/unread-count', [\App\Http\Controllers\ChatController::class, 'unreadCount'])->name('chatbot.unread-count');
         Route::get('/chatbot/recent-notifications', [\App\Http\Controllers\ChatController::class, 'recentNotifications'])->name('chatbot.recent-notifications');
         Route::post('/chatbot/mark-as-read/{message}', [\App\Http\Controllers\ChatController::class, 'markAsRead'])->name('chatbot.mark-as-read');

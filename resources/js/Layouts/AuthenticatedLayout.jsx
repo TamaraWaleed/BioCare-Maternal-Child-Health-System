@@ -154,14 +154,16 @@ export default function AuthenticatedLayout({ header, children, breadcrumbs }) {
                                         <FontAwesomeIcon icon={faTachometerAlt} className="mr-2" />
                                         Dashboard
                                     </NavLink>
-                                    <NavLink
-                                        href={route('chatbot.index')}
-                                        active={route().current('chatbot.index')}
-                                        className="text-office-colorful-text dark:text-office-black-text hover:text-office-colorful-ribbon dark:hover:text-white flex items-center"
-                                    >
-                                        <FontAwesomeIcon icon={faComments} className="mr-2" />
-                                        ChatBot
-                                    </NavLink>
+                                    {user.role === 'mother' && (
+                                        <NavLink
+                                            href={route('chatbot.index')}
+                                            active={route().current('chatbot.index')}
+                                            className="text-office-colorful-text dark:text-office-black-text hover:text-office-colorful-ribbon dark:hover:text-white flex items-center"
+                                        >
+                                            <FontAwesomeIcon icon={faComments} className="mr-2" />
+                                            ChatBot
+                                        </NavLink>
+                                    )}
                                 </div>
                             </div>
 
@@ -198,7 +200,7 @@ export default function AuthenticatedLayout({ header, children, breadcrumbs }) {
                                                     notifications.map((notif) => (
                                                         <Link
                                                             key={notif.id}
-                                                            href={notif.url || route('chatbot.index')}
+                                                            href={notif.url || (user.role === 'mother' ? route('chatbot.index') : '#')}
                                                             onClick={() => handleNotificationClick(notif)}
                                                             className="block px-4 py-3 hover:bg-office-colorful-bg dark:hover:bg-office-black-bg transition border-b border-office-colorful-border dark:border-office-black-border last:border-0"
                                                         >
@@ -310,14 +312,16 @@ export default function AuthenticatedLayout({ header, children, breadcrumbs }) {
                                 <FontAwesomeIcon icon={faTachometerAlt} className="mr-2" />
                                 Dashboard
                             </ResponsiveNavLink>
-                            <ResponsiveNavLink
-                                href={route('chatbot.index')}
-                                active={route().current('chatbot.index')}
-                                className="text-office-colorful-text dark:text-office-black-text flex items-center"
-                            >
-                                <FontAwesomeIcon icon={faComments} className="mr-2" />
-                                Chat
-                            </ResponsiveNavLink>
+                            {user.role === 'mother' && (
+                                <ResponsiveNavLink
+                                    href={route('chatbot.index')}
+                                    active={route().current('chatbot.index')}
+                                    className="text-office-colorful-text dark:text-office-black-text flex items-center"
+                                >
+                                    <FontAwesomeIcon icon={faComments} className="mr-2" />
+                                    Chat
+                                </ResponsiveNavLink>
+                            )}
                         </div>
 
                         <div className="border-t border-office-colorful-border pb-1 pt-4 dark:border-office-black-border">
@@ -333,7 +337,11 @@ export default function AuthenticatedLayout({ header, children, breadcrumbs }) {
                                 {/* Notification Icon (Mobile) */}
                                 <button
                                     className="mr-2 rounded-full p-2 text-office-colorful-subtext hover:bg-office-colorful-bg focus:outline-none dark:text-office-black-subtext dark:hover:bg-office-black-bg relative transition-colors"
-                                    onClick={() => window.location.href = route('chatbot.index')}
+                                    onClick={() => {
+                                        if (user.role === 'mother') {
+                                            window.location.href = route('chatbot.index');
+                                        }
+                                    }}
                                 >
                                     <FontAwesomeIcon icon={faBell} className="w-5 h-5" />
                                     {unreadCount > 0 && (

@@ -42,7 +42,7 @@ export default function Dashboard({ auth, usersCount, doctorsCount, mothersCount
                                     <FontAwesomeIcon icon={faCalendarAlt} className="mr-2 w-4 text-office-colorful-ribbon dark:text-office-accent" /> Clinic Schedule
                                 </Link>
                                 <Link href={route('nurse.announcements.index')} className="text-sm text-office-colorful-subtext hover:text-office-colorful-ribbon dark:text-office-black-subtext dark:hover:text-office-accent transition flex items-center">
-                                    <FontAwesomeIcon icon={faBullhorn} className="mr-2 w-4" /> Create Ads
+                                    <FontAwesomeIcon icon={faBullhorn} className="mr-2 w-4" /> Create Announcements
                                 </Link>
                             </div>
                         </div>
