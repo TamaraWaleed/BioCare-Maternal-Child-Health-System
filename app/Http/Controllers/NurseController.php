@@ -14,8 +14,9 @@ class NurseController extends Controller
     {
         return Inertia::render('Nurse/Dashboard', [
             'usersCount' => User::count(),
-            'doctorsCount' => User::where('role', 'doctor')->count(),
-            'mothersCount' => User::where('role', 'mother')->count(),
+            'doctorsCount' => User::where('role', 'doctor')->where('IsActive', 1)->count(),
+            'mothersCount' => User::where('role', 'mother')->where('IsActive', 1)->count(),
+            'nursesCount' => User::where('role', 'nurse')->where('IsActive', 1)->count(),
         ]);
     }
 
@@ -32,64 +33,64 @@ class NurseController extends Controller
         return Inertia::render('Nurse/Announcements/Create');
     }
 
-
-    public function manageUsers(Request $request)
+    public function manageMothers(Request $request)
     {
-        $query = User::query();
+        $users = User::where('role', 'mother')->paginate(10)->withQueryString();
 
-        if ($request->has('role')) {
-            $query->where('role', $request->role);
-        }
-
-        $users = $query->paginate(10)->withQueryString();
-
-        return Inertia::render('Nurse/ManageUsers', [
-            'users' => $users,
-            'filters' => $request->only('role')
+        return Inertia::render('Nurse/ManageMothers', [
+            'users' => $users
         ]);
     }
 
-    public function storeUser(Request $request)
+    public function storeMother(Request $request)
     {
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8',
-            'role' => 'required|in:nurse,doctor,mother',
         ]);
 
         User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => \Illuminate\Support\Facades\Hash::make($request->password),
-            'role' => $request->role,
+            'role' => 'mother',
         ]);
 
-        return back()->with('success', 'User created successfully');
+        return back()->with('success', 'Mother created successfully');
     }
 
-    public function updateUser(Request $request, User $user)
+    public function updateMother(Request $request, User $user)
     {
+        if ($user->role !== 'mother') {
+            return back()->with('error', 'You can only edit mothers.');
+        }
+
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
-            'role' => 'required|in:nurse,doctor,mother',
         ]);
 
-        $user->update($request->only('name', 'email', 'role'));
+        $user->update($request->only('name', 'email'));
 
-        return back()->with('success', 'User updated successfully');
+        return back()->with('success', 'Mother updated successfully');
     }
 
-    public function deleteUser(User $user)
+    public function deleteMother(User $user)
     {
-        if (auth()->id() === $user->id) {
-            return back()->with('error', 'You cannot delete your own account.');
+        if ($user->role !== 'mother') {
+            return back()->with('error', 'You can only delete mothers.');
         }
 
-        $user->delete();
-        return back()->with('success', 'User deleted successfully');
+        $user->IsActive = !$user->IsActive;
+        $user->save();
+
+        $status = $user->IsActive ? 'activated' : 'deactivated';
+        return back()->with('success', "Mother {$status} successfully.");
     }
+
+
+
 
     public function storeAd(Request $request)
     {

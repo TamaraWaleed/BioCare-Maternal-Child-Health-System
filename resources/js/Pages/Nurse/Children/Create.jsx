@@ -1,6 +1,9 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, Link } from '@inertiajs/react';
 import PrimaryButton from '@/Components/PrimaryButton';
+import InputLabel from '@/Components/InputLabel';
+import TextInput from '@/Components/TextInput';
+import InputError from '@/Components/InputError';
 
 export default function Create({ auth, mothers }) {
     const { data, setData, post, processing, errors } = useForm({
@@ -27,13 +30,14 @@ export default function Create({ auth, mothers }) {
         >
             <Head title="Add Child" />
 
-            <div className="py-12 bg-office-colorful-bg dark:bg-office-black-bg min-h-[calc(100vh-160px)]">
+            <div className="py-12 min-h-screen">
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
                     <div className="bg-office-colorful-surface overflow-hidden shadow-sm sm:rounded-lg p-6 border border-office-colorful-border dark:bg-office-black-surface dark:border-office-black-border">
-                        <form onSubmit={handleSubmit} className="max-w-xl space-y-4">
+                        <form onSubmit={handleSubmit} className="max-w-xl space-y-6">
                             <div>
-                                <label className="block text-sm font-medium text-office-colorful-text dark:text-office-black-text">Mother</label>
+                                <InputLabel htmlFor="mother_user_id" value="Mother" />
                                 <select
+                                    id="mother_user_id"
                                     className="mt-1 block w-full border-office-colorful-border rounded-md shadow-sm focus:ring-office-accent focus:border-office-accent dark:bg-office-black-bg dark:border-office-black-border dark:text-office-black-text"
                                     value={data.mother_user_id}
                                     onChange={(e) => setData('mother_user_id', e.target.value)}
@@ -44,24 +48,26 @@ export default function Create({ auth, mothers }) {
                                         <option key={mother.id} value={mother.id} className="dark:bg-office-black-surface">{mother.name}</option>
                                     ))}
                                 </select>
-                                {errors.mother_user_id && <div className="text-red-500 text-xs mt-1">{errors.mother_user_id}</div>}
+                                <InputError message={errors.mother_user_id} className="mt-2" />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-office-colorful-text dark:text-office-black-text">Child Name</label>
-                                <input
+                                <InputLabel htmlFor="name" value="Child Name" />
+                                <TextInput
+                                    id="name"
                                     type="text"
-                                    className="mt-1 block w-full border-office-colorful-border rounded-md shadow-sm focus:ring-office-accent focus:border-office-accent dark:bg-office-black-bg dark:border-office-black-border dark:text-office-black-text"
+                                    className="mt-1 block w-full"
                                     value={data.name}
                                     onChange={(e) => setData('name', e.target.value)}
                                     required
                                 />
-                                {errors.name && <div className="text-red-500 text-xs mt-1">{errors.name}</div>}
+                                <InputError message={errors.name} className="mt-2" />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-office-colorful-text dark:text-office-black-text">Sex</label>
+                                <InputLabel htmlFor="sex" value="Sex" />
                                 <select
+                                    id="sex"
                                     className="mt-1 block w-full border-office-colorful-border rounded-md shadow-sm focus:ring-office-accent focus:border-office-accent dark:bg-office-black-bg dark:border-office-black-border dark:text-office-black-text"
                                     value={data.sex}
                                     onChange={(e) => setData('sex', e.target.value)}
@@ -73,25 +79,29 @@ export default function Create({ auth, mothers }) {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-office-colorful-text dark:text-office-black-text">Birth Date</label>
-                                <input
+                                <InputLabel htmlFor="birth_date" value="Birth Date" />
+                                <TextInput
+                                    id="birth_date"
                                     type="date"
-                                    className="mt-1 block w-full border-office-colorful-border rounded-md shadow-sm focus:ring-office-accent focus:border-office-accent dark:bg-office-black-bg dark:border-office-black-border dark:text-office-black-text"
+                                    className="mt-1 block w-full"
                                     value={data.birth_date}
                                     onChange={(e) => setData('birth_date', e.target.value)}
                                     required
                                 />
+                                <InputError message={errors.birth_date} className="mt-2" />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-office-colorful-text dark:text-office-black-text">Birth Weight (kg)</label>
-                                <input
+                                <InputLabel htmlFor="birth_weight" value="Birth Weight (kg)" />
+                                <TextInput
+                                    id="birth_weight"
                                     type="number"
                                     step="0.01"
-                                    className="mt-1 block w-full border-office-colorful-border rounded-md shadow-sm focus:ring-office-accent focus:border-office-accent dark:bg-office-black-bg dark:border-office-black-border dark:text-office-black-text"
+                                    className="mt-1 block w-full"
                                     value={data.birth_weight}
                                     onChange={(e) => setData('birth_weight', e.target.value)}
                                 />
+                                <InputError message={errors.birth_weight} className="mt-2" />
                             </div>
 
                             <div className="flex items-center gap-4 pt-4">

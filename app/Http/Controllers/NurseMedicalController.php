@@ -120,7 +120,15 @@ class NurseMedicalController extends Controller
         $this->notifyRole(
             'doctor',
             "Nurse " . auth()->user()->name . " saved an antenatal record.",
-            route('doctor.search')
+            route('doctor.patients.show', $request->mother_user_id)
+        );
+
+        $mother = User::find($request->mother_user_id);
+        $motherName = $mother ? $mother->name : 'a patient';
+        $this->notifyRole(
+            'admin',
+            "Nurse " . auth()->user()->name . " saved an antenatal record for " . $motherName . ".",
+            route('admin.mothers.show', $request->mother_user_id)
         );
 
         if ($request->appointment_id) {
@@ -192,7 +200,12 @@ class NurseMedicalController extends Controller
             $this->notifyRole(
                 'doctor',
                 "Nurse " . auth()->user()->name . " saved a newborn assessment for " . $child->name,
-                route('doctor.search')
+                route('doctor.patients.show', $child->mother_user_id)
+            );
+            $this->notifyRole(
+                'admin',
+                "Nurse " . auth()->user()->name . " saved a newborn assessment for " . $child->name . ".",
+                route('admin.mothers.show', $child->mother_user_id)
             );
         }
 
@@ -252,7 +265,15 @@ class NurseMedicalController extends Controller
         $this->notifyRole(
             'doctor',
             "Nurse " . auth()->user()->name . " saved a postnatal examination record.",
-            route('doctor.search')
+            route('doctor.patients.show', $request->mother_user_id)
+        );
+
+        $mother = User::find($request->mother_user_id);
+        $motherName = $mother ? $mother->name : 'a patient';
+        $this->notifyRole(
+            'admin',
+            "Nurse " . auth()->user()->name . " saved a postnatal examination record for " . $motherName . ".",
+            route('admin.mothers.show', $request->mother_user_id)
         );
 
         return redirect()->route('nurse.medical.index')->with('success', 'Postnatal examination saved.');
@@ -290,7 +311,16 @@ class NurseMedicalController extends Controller
             'updated_at' => now(),
         ]);
 
-        $this->notifyRole('doctor', "Nurse " . auth()->user()->name . " saved a previous pregnancy record.", route('doctor.search'));
+        $this->notifyRole('doctor', "Nurse " . auth()->user()->name . " saved a previous pregnancy record.", route('doctor.patients.show', $request->mother_user_id));
+
+        $mother = User::find($request->mother_user_id);
+        $motherName = $mother ? $mother->name : 'a patient';
+        $this->notifyRole(
+            'admin',
+            "Nurse " . auth()->user()->name . " saved a previous pregnancy record for " . $motherName . ".",
+            route('admin.mothers.show', $request->mother_user_id)
+        );
+
         return redirect()->route('nurse.medical.index')->with('success', 'Previous pregnancy record saved.');
     }
 
@@ -334,7 +364,16 @@ class NurseMedicalController extends Controller
             'updated_at' => now(),
         ]);
 
-        $this->notifyRole('doctor', "Nurse " . auth()->user()->name . " saved an obstetrical risks record.", route('doctor.search'));
+        $this->notifyRole('doctor', "Nurse " . auth()->user()->name . " saved an obstetrical risks record.", route('doctor.patients.show', $request->mother_user_id));
+
+        $mother = User::find($request->mother_user_id);
+        $motherName = $mother ? $mother->name : 'a patient';
+        $this->notifyRole(
+            'admin',
+            "Nurse " . auth()->user()->name . " saved an obstetrical risks record for " . $motherName . ".",
+            route('admin.mothers.show', $request->mother_user_id)
+        );
+
         return redirect()->route('nurse.medical.index')->with('success', 'Obstetrical risks saved.');
     }
 
@@ -371,7 +410,16 @@ class NurseMedicalController extends Controller
 
         DB::table('current_risks')->insert($data);
 
-        $this->notifyRole('doctor', "Nurse " . auth()->user()->name . " saved a current risks record.", route('doctor.search'));
+        $this->notifyRole('doctor', "Nurse " . auth()->user()->name . " saved a current risks record.", route('doctor.patients.show', $request->mother_user_id));
+
+        $mother = User::find($request->mother_user_id);
+        $motherName = $mother ? $mother->name : 'a patient';
+        $this->notifyRole(
+            'admin',
+            "Nurse " . auth()->user()->name . " saved a current risks record for " . $motherName . ".",
+            route('admin.mothers.show', $request->mother_user_id)
+        );
+
         return redirect()->route('nurse.medical.index')->with('success', 'Current risks record saved.');
     }
 
@@ -419,7 +467,16 @@ class NurseMedicalController extends Controller
             'updated_at' => now(),
         ]);
 
-        $this->notifyRole('doctor', "Nurse " . auth()->user()->name . " saved a USS examination record.", route('doctor.search'));
+        $this->notifyRole('doctor', "Nurse " . auth()->user()->name . " saved a USS examination record.", route('doctor.patients.show', $request->mother_user_id));
+
+        $mother = User::find($request->mother_user_id);
+        $motherName = $mother ? $mother->name : 'a patient';
+        $this->notifyRole(
+            'admin',
+            "Nurse " . auth()->user()->name . " saved a USS examination record for " . $motherName . ".",
+            route('admin.mothers.show', $request->mother_user_id)
+        );
+
         return redirect()->route('nurse.medical.index')->with('success', 'USS examination saved.');
     }
 
@@ -460,7 +517,12 @@ class NurseMedicalController extends Controller
             $this->notifyRole(
                 'doctor',
                 "Nurse " . auth()->user()->name . " saved a vaccination record for " . $child->name,
-                route('doctor.search')
+                route('doctor.patients.show', $child->mother_user_id)
+            );
+            $this->notifyRole(
+                'admin',
+                "Nurse " . auth()->user()->name . " saved a vaccination record (" . $request->vaccine_name . ") for " . $child->name . ".",
+                route('admin.mothers.show', $child->mother_user_id)
             );
         }
 
@@ -503,7 +565,12 @@ class NurseMedicalController extends Controller
             $this->notifyRole(
                 'doctor',
                 "Nurse " . auth()->user()->name . " saved a child preventive examination for " . $child->name,
-                route('doctor.search')
+                route('doctor.patients.show', $child->mother_user_id)
+            );
+            $this->notifyRole(
+                'admin',
+                "Nurse " . auth()->user()->name . " saved a child preventive examination (" . $request->examination_name . ") for " . $child->name . ".",
+                route('admin.mothers.show', $child->mother_user_id)
             );
         }
 
@@ -513,15 +580,14 @@ class NurseMedicalController extends Controller
     // --- Schedule Management ---
     public function schedule()
     {
-        // Fetch appointments from last 7 days and upcoming
-        $appointments = \App\Models\Appointment::with(['mother', 'doctor'])
-            ->where('appointment_date', '>=', now()->subDays(7)->toDateString())
+        // Fetch all appointments
+        $appointments = \App\Models\Appointment::with(['mother', 'doctor', 'antenatalRecord'])
             ->orderByRaw("CASE WHEN status = 'scheduled' THEN 1 ELSE 2 END")
             ->orderBy('appointment_date', 'asc')
             ->get();
 
         $mothers = \App\Models\User::where('role', 'mother')->orderBy('name')->get();
-        $doctors = \App\Models\User::where('role', 'doctor')->orderBy('name')->get();
+        $doctors = \App\Models\User::whereIn('role', ['doctor', 'nurse'])->orderBy('name')->get();
 
         return Inertia::render('Nurse/Schedule', [
             'appointments' => $appointments,

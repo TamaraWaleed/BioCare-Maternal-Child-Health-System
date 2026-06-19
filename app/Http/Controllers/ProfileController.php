@@ -26,6 +26,7 @@ class ProfileController extends Controller
             'doctorProfile' => $request->user()->doctorProfile,
             'nurseProfile' => $request->user()->nurseProfile,
             'motherProfile' => $request->user()->motherProfile,
+            'adminProfile' => $request->user()->adminProfile,
         ]);
     }
 
@@ -50,8 +51,9 @@ class ProfileController extends Controller
 
         $user->save();
 
-        if (in_array($user->role, ['doctor', 'nurse', 'mother'])) {
+        if (in_array($user->role, ['admin', 'doctor', 'nurse', 'mother'])) {
             $profileRelation = match($user->role) {
+                'admin' => 'adminProfile',
                 'doctor' => 'doctorProfile',
                 'nurse' => 'nurseProfile',
                 'mother' => 'motherProfile',

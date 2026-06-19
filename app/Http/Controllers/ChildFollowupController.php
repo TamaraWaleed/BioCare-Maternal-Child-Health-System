@@ -46,13 +46,13 @@ class ChildFollowupController extends Controller
             $this->notifyUser(
                 $record->doctor_user_id,
                 "A child follow-up referral for " . $record->child->name . " has been assigned to you.",
-                route('doctor.followup')
+                route('doctor.patients.show', $record->child->mother_user_id)
             );
         } else {
             $this->notifyRole(
                 'doctor',
                 "A new child follow-up referral for " . $record->child->name . " has been created.",
-                route('doctor.followup')
+                route('doctor.patients.show', $record->child->mother_user_id)
             );
         }
 

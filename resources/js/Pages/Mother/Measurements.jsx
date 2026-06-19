@@ -6,19 +6,52 @@ import { useState } from 'react';
 export default function Measurements({ auth, children = [] }) {
     const theme = typeof window !== 'undefined' ? localStorage.getItem('theme') || 'light' : 'light';
 
-    // Dummy Data for Charts (Replace with real data later) - Reusing logic from Doctor's view for consistency
-    const [weightData, setWeightData] = useState([
-        { age: '0m', weight: 3.2, maleAvg: 3.3, femaleAvg: 3.2 },
-        { age: '1m', weight: 4.5, maleAvg: 4.5, femaleAvg: 4.2 },
-        { age: '2m', weight: 5.8, maleAvg: 5.6, femaleAvg: 5.1 },
-        { age: '3m', weight: 6.5, maleAvg: 6.4, femaleAvg: 5.8 },
-        { age: '4m', weight: 7.0, maleAvg: 7.0, femaleAvg: 6.4 },
-        { age: '6m', weight: 8.2, maleAvg: 7.9, femaleAvg: 7.3 },
-    ]);
-
     const [selectedChildId, setSelectedChildId] = useState(children && children.length > 0 ? children[0].id : null);
-
     const selectedChild = children?.find(c => c.id == selectedChildId);
+
+    // Generate dynamic chart data based on selected child's measurements
+    const generateChartData = () => {
+        const baseMonths = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+        const standardWeightMale = [3.3, 4.5, 5.6, 6.4, 7.0, 7.5, 7.9, 8.3, 8.6, 8.9, 9.2, 9.4, 9.6];
+        const standardWeightFemale = [3.2, 4.2, 5.1, 5.8, 6.4, 6.9, 7.3, 7.6, 7.9, 8.2, 8.5, 8.7, 8.9];
+        const standardHeightMale = [49.9, 54.7, 58.4, 61.4, 63.9, 65.9, 67.6, 69.2, 70.6, 72.0, 73.3, 74.5, 75.7];
+        const standardHeightFemale = [49.1, 53.7, 57.1, 59.8, 62.1, 64.0, 65.7, 67.3, 68.7, 70.1, 71.5, 72.8, 74.0];
+
+        const childMeasurementsByMonth = {};
+        if (selectedChild && selectedChild.measurements) {
+            selectedChild.measurements.forEach(m => {
+                if (selectedChild.birth_date) {
+                    const birth = new Date(selectedChild.birth_date);
+                    const record = new Date(m.record_date);
+                    const months = (record.getFullYear() - birth.getFullYear()) * 12 + (record.getMonth() - birth.getMonth());
+                    if (months >= 0 && months <= 12) {
+                        // Reverse array order means newest overwrites oldest, we want newest per month if any
+                        if (!childMeasurementsByMonth[months] || new Date(m.record_date) > new Date(childMeasurementsByMonth[months].record_date)) {
+                            childMeasurementsByMonth[months] = {
+                                weight: parseFloat(m.weight),
+                                height: parseFloat(m.height),
+                                record_date: m.record_date
+                            };
+                        }
+                    }
+                }
+            });
+        }
+
+        return baseMonths.map(month => ({
+            age: `${month}m`,
+            maleAvgWeight: standardWeightMale[month],
+            femaleAvgWeight: standardWeightFemale[month],
+            maleAvgHeight: standardHeightMale[month],
+            femaleAvgHeight: standardHeightFemale[month],
+            childWeight: childMeasurementsByMonth[month]?.weight || null,
+            childHeight: childMeasurementsByMonth[month]?.height || null,
+        }));
+    };
+
+    const chartData = generateChartData();
+
+
 
     return (
         <AuthenticatedLayout
@@ -59,25 +92,34 @@ export default function Measurements({ auth, children = [] }) {
                                 <h3 className="text-lg font-bold mb-4 text-office-colorful-text dark:text-white">{selectedChild.name}'s Weight for Age</h3>
                                 <div className="h-64">
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <LineChart data={weightData}>
+                                        <LineChart data={chartData}>
                                             <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#404040' : '#e5e5e5'} />
                                             <XAxis dataKey="age" stroke={theme === 'dark' ? '#e6e6e6' : '#333'} />
                                             <YAxis stroke={theme === 'dark' ? '#e6e6e6' : '#333'} />
                                             <Tooltip contentStyle={{ backgroundColor: theme === 'dark' ? '#262626' : '#fff', borderColor: theme === 'dark' ? '#404040' : '#e5e5e5' }} />
                                             <Legend />
-                                            <Line type="monotone" dataKey={selectedChild.sex === 'male' ? 'maleAvg' : 'femaleAvg'} stroke="#2B7CBD" name="Avg Standard" strokeDasharray="5 5" />
-                                            {/* In real app, we would map selectedChild.measurements to chart data */}
-                                            <Line type="monotone" dataKey="weight" stroke="#107c10" name="My Child" strokeWidth={2} />
+                                            <Line type="monotone" dataKey={selectedChild.sex === 'male' ? 'maleAvgWeight' : 'femaleAvgWeight'} stroke="#2B7CBD" name="Avg Standard" strokeDasharray="5 5" connectNulls />
+                                            <Line type="monotone" dataKey="childWeight" stroke="#107c10" name="My Child" strokeWidth={2} connectNulls />
                                         </LineChart>
                                     </ResponsiveContainer>
                                 </div>
                             </div>
 
-                            {/* Height Chart - Placeholder */}
+                            {/* Height Chart */}
                             <div className="bg-office-colorful-surface overflow-hidden shadow-sm sm:rounded-lg p-6 border border-office-colorful-border dark:bg-office-black-surface dark:border-office-black-border">
                                 <h3 className="text-lg font-bold mb-4 text-office-colorful-text dark:text-white">{selectedChild.name}'s Height for Age</h3>
-                                <div className="h-64 flex items-center justify-center bg-office-colorful-bg border border-dashed border-office-colorful-border dark:bg-office-black-bg dark:border-office-black-border">
-                                    <p className="text-office-colorful-subtext dark:text-office-black-subtext">Height chart data available soon.</p>
+                                <div className="h-64">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <LineChart data={chartData}>
+                                            <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#404040' : '#e5e5e5'} />
+                                            <XAxis dataKey="age" stroke={theme === 'dark' ? '#e6e6e6' : '#333'} />
+                                            <YAxis stroke={theme === 'dark' ? '#e6e6e6' : '#333'} />
+                                            <Tooltip contentStyle={{ backgroundColor: theme === 'dark' ? '#262626' : '#fff', borderColor: theme === 'dark' ? '#404040' : '#e5e5e5' }} />
+                                            <Legend />
+                                            <Line type="monotone" dataKey={selectedChild.sex === 'male' ? 'maleAvgHeight' : 'femaleAvgHeight'} stroke="#2B7CBD" name="Avg Standard" strokeDasharray="5 5" connectNulls />
+                                            <Line type="monotone" dataKey="childHeight" stroke="#d13b3b" name="My Child" strokeWidth={2} connectNulls />
+                                        </LineChart>
+                                    </ResponsiveContainer>
                                 </div>
                             </div>
 

@@ -197,13 +197,38 @@ export default function AuthenticatedLayout({ header, children, breadcrumbs }) {
                                                         No new Notifications
                                                     </div>
                                                 ) : (
-                                                    notifications.map((notif) => (
-                                                        <Link
-                                                            key={notif.id}
-                                                            href={notif.url || (user.role === 'mother' ? route('chatbot.index') : '#')}
-                                                            onClick={() => handleNotificationClick(notif)}
-                                                            className="block px-4 py-3 hover:bg-office-colorful-bg dark:hover:bg-office-black-bg transition border-b border-office-colorful-border dark:border-office-black-border last:border-0"
-                                                        >
+                                                    notifications.map((notif) => {
+                                                        let targetUrl = notif.url;
+
+                                                        // Ensure role-specific safe navigation
+                                                        if (user.role === 'admin') {
+                                                            if (targetUrl && (targetUrl.includes('/doctor/') || targetUrl.includes('/mother/') || targetUrl.includes('/nurse/'))) {
+                                                                const match = targetUrl.match(/\/(?:patients|mothers)\/(\d+)/);
+                                                                if (match && match[1]) {
+                                                                    targetUrl = route('admin.mothers.show', match[1]);
+                                                                } else {
+                                                                    targetUrl = '#';
+                                                                }
+                                                            }
+                                                        } else if (user.role === 'doctor') {
+                                                            if (targetUrl && (targetUrl.includes('/admin/') || targetUrl.includes('/mother/') || targetUrl.includes('/nurse/'))) {
+                                                                targetUrl = '#';
+                                                            }
+                                                        } else if (user.role === 'nurse') {
+                                                            if (targetUrl && (targetUrl.includes('/admin/') || targetUrl.includes('/mother/') || targetUrl.includes('/doctor/'))) {
+                                                                targetUrl = '#';
+                                                            }
+                                                        } else if (user.role === 'mother') {
+                                                            if (targetUrl && (targetUrl.includes('/admin/') || targetUrl.includes('/doctor/') || targetUrl.includes('/nurse/'))) {
+                                                                targetUrl = route('chatbot.index');
+                                                            }
+                                                        }
+
+                                                        if (!targetUrl) {
+                                                            targetUrl = user.role === 'mother' ? route('chatbot.index') : '#';
+                                                        }
+
+                                                        const itemContent = (
                                                             <div className="flex items-center">
                                                                 <div className="flex-shrink-0 mr-3">
                                                                     <div className="h-8 w-8 rounded-full bg-office-colorful-ribbon dark:bg-office-accent flex items-center justify-center text-white font-bold text-xs">
@@ -224,8 +249,31 @@ export default function AuthenticatedLayout({ header, children, breadcrumbs }) {
                                                                     </p>
                                                                 </div>
                                                             </div>
-                                                        </Link>
-                                                    ))
+                                                        );
+
+                                                        if (targetUrl === '#') {
+                                                            return (
+                                                                <button
+                                                                    key={notif.id}
+                                                                    onClick={() => handleNotificationClick(notif)}
+                                                                    className="w-full text-left block px-4 py-3 hover:bg-office-colorful-bg dark:hover:bg-office-black-bg transition border-b border-office-colorful-border dark:border-office-black-border last:border-0"
+                                                                >
+                                                                    {itemContent}
+                                                                </button>
+                                                            );
+                                                        }
+
+                                                        return (
+                                                            <Link
+                                                                key={notif.id}
+                                                                href={targetUrl}
+                                                                onClick={() => handleNotificationClick(notif)}
+                                                                className="block px-4 py-3 hover:bg-office-colorful-bg dark:hover:bg-office-black-bg transition border-b border-office-colorful-border dark:border-office-black-border last:border-0"
+                                                            >
+                                                                {itemContent}
+                                                            </Link>
+                                                        );
+                                                    })
                                                 )}
                                             </div>
 

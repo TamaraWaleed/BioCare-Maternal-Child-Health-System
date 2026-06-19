@@ -3,11 +3,12 @@ import { Head } from '@inertiajs/react';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm';
 
-export default function Edit({ mustVerifyEmail, status, auth, doctorProfile, nurseProfile, motherProfile }) {
+export default function Edit({ mustVerifyEmail, status, auth, doctorProfile, nurseProfile, motherProfile, adminProfile }) {
     const isDoctor = auth.user.role === 'doctor';
     const isNurse = auth.user.role === 'nurse';
     const isMother = auth.user.role === 'mother';
-    const isLegacy = isDoctor || isNurse || isMother;
+    const isAdmin = auth.user.role === 'admin';
+    const isLegacy = isDoctor || isNurse || isMother || isAdmin;
 
     return (
         <AuthenticatedLayout
@@ -26,6 +27,7 @@ export default function Edit({ mustVerifyEmail, status, auth, doctorProfile, nur
                             doctorProfile={doctorProfile}
                             nurseProfile={nurseProfile}
                             motherProfile={motherProfile}
+                            adminProfile={adminProfile}
                             className="w-full text-office-colorful-text dark:text-office-black-text"
                         />
                     </div>

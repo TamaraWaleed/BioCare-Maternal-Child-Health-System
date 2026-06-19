@@ -22,6 +22,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'IsActive',
     ];
 
     /**
@@ -43,7 +44,13 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'IsActive' => 'boolean',
         ];
+    }
+
+    public function adminProfile()
+    {
+        return $this->hasOne(AdminProfile::class);
     }
 
     public function doctorProfile()

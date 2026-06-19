@@ -53,6 +53,13 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        if (!$user->IsActive) {
+            RateLimiter::hit($this->throttleKey());
+            throw ValidationException::withMessages([
+                'email' => 'Your account is inactive. Please contact the administrator.',
+            ]);
+        }
+
         // 2. Check for legacy password migration
         if ($user) {
             // Check for MD5

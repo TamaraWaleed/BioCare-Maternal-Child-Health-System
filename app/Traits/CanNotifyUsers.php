@@ -18,7 +18,7 @@ trait CanNotifyUsers
      */
     public function notifyRole(string $role, string $content, string $url = null)
     {
-        $users = User::where('role', $role)->get();
+        $users = User::where('role', $role)->where('IsActive', true)->get();
         $this->sendMessagesTo($users, $content, $url);
     }
 
@@ -33,12 +33,12 @@ trait CanNotifyUsers
     public function notifyUser($userOrId, string $content, string $url = null)
     {
         if (is_numeric($userOrId)) {
-            $user = User::find($userOrId);
+            $user = User::where('id', $userOrId)->where('IsActive', true)->first();
         } else {
             $user = $userOrId;
         }
 
-        if ($user) {
+        if ($user && $user->IsActive) {
             $this->sendMessagesTo(collect([$user]), $content, $url);
         }
     }

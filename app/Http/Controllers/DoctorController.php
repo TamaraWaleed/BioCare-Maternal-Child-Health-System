@@ -11,15 +11,36 @@ class DoctorController extends Controller
 {
     use CanNotifyUsers;
 
-    public function dashboard()
+    public function dashboard(Request $request)
     {
-        $mothers = \App\Models\User::where('role', 'mother')
-            ->with(['motherProfile', 'children'])
+        $search = $request->input('search');
+
+        $query = \App\Models\User::where('role', 'mother')
+            ->where('IsActive', 1);
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        $mothers = $query->with(['motherProfile', 'children'])
             ->latest()
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
+
+        $todayAppointments = \App\Models\Appointment::where('appointment_date', today()->toDateString())
+            ->with(['mother', 'doctor'])
+            ->orderByRaw("CASE WHEN status = 'scheduled' THEN 1 ELSE 2 END")
+            ->get();
 
         return Inertia::render('Doctor/Dashboard', [
-            'mothers' => $mothers
+            'mothers' => $mothers,
+            'todayAppointments' => $todayAppointments,
+            'filters' => [
+                'search' => $search
+            ]
         ]);
     }
 
@@ -49,15 +70,14 @@ class DoctorController extends Controller
 
     public function schedule()
     {
-        // Fetch appointments from last 7 days and upcoming
-        $appointments = \App\Models\Appointment::with(['mother', 'doctor'])
-            ->where('appointment_date', '>=', now()->subDays(7)->toDateString())
+        // Fetch all appointments
+        $appointments = \App\Models\Appointment::with(['mother', 'doctor', 'antenatalRecord'])
             ->orderByRaw("CASE WHEN status = 'scheduled' THEN 1 ELSE 2 END")
             ->orderBy('appointment_date', 'asc')
             ->get();
 
         $mothers = \App\Models\User::where('role', 'mother')->orderBy('name')->get();
-        $doctors = \App\Models\User::where('role', 'doctor')->orderBy('name')->get();
+        $doctors = \App\Models\User::whereIn('role', ['doctor', 'nurse'])->orderBy('name')->get();
 
         return Inertia::render('Doctor/Schedule', [
             'appointments' => $appointments,
@@ -217,6 +237,14 @@ class DoctorController extends Controller
                 route('mother.antenatal')
             );
 
+            $mother = \App\Models\User::find($request->mother_user_id);
+            $motherName = $mother ? $mother->name : 'a patient';
+            $this->notifyRole(
+                'admin',
+                "Doctor " . auth()->user()->name . " saved a new antenatal record for " . $motherName . ".",
+                route('admin.mothers.show', $request->mother_user_id)
+            );
+
             if ($request->appointment_id) {
                 return redirect()->route('doctor.schedule')->with('success', 'Antenatal record saved and appointment completed.');
             }
@@ -271,6 +299,15 @@ class DoctorController extends Controller
             route('nurse.medical.preventive.create')
         );
 
+        $child = \App\Models\Child::find($request->child_id);
+        if ($child) {
+            $this->notifyRole(
+                'admin',
+                "Doctor " . auth()->user()->name . " saved a child examination record (" . $request->examination_name . ") for " . $child->name . ".",
+                route('admin.mothers.show', $child->mother_user_id)
+            );
+        }
+
         return redirect()->route('doctor.child_examination')->with('success', 'Child examination saved.');
     }
 
@@ -280,10 +317,27 @@ class DoctorController extends Controller
             return redirect()->route('doctor.dashboard')->with('error', 'Invalid patient.');
         }
 
-        $user->load(['motherProfile', 'children']);
+        $user->load(['motherProfile', 'children.measurements', 'children.vaccinations']);
+
+        $childIds = $user->children->pluck('id')->toArray();
+        $schoolVaccinations = [];
+        $preventiveExams = [];
+        $newbornAssessments = [];
+        $followups = [];
+
+        if (!empty($childIds)) {
+            $schoolVaccinations = DB::table('school_vaccination_program')->whereIn('child_id', $childIds)->latest()->get();
+            $preventiveExams = DB::table('child_preventive_examinations')->whereIn('child_id', $childIds)->latest()->get();
+            $newbornAssessments = DB::table('newborn_assessments')->whereIn('child_id', $childIds)->latest()->get();
+            $followups = DB::table('child_followup_referred')->whereIn('child_id', $childIds)->latest()->get();
+        }
 
         return Inertia::render('Doctor/Show', [
-            'mother' => $user
+            'mother' => $user,
+            'schoolVaccinations' => $schoolVaccinations,
+            'preventiveExams' => $preventiveExams,
+            'newbornAssessments' => $newbornAssessments,
+            'followups' => $followups
         ]);
     }
 

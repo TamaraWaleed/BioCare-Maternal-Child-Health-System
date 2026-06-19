@@ -2,6 +2,8 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import Swal from 'sweetalert2';
 import PrimaryButton from '@/Components/PrimaryButton';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
 
 export default function Index({ auth, children }) {
     const { delete: destroy } = useForm();
@@ -33,7 +35,7 @@ export default function Index({ auth, children }) {
         >
             <Head title="Manage Children" />
 
-            <div className="py-12 bg-office-colorful-bg dark:bg-office-black-bg min-h-[calc(100vh-160px)]">
+            <div className="py-12 min-h-screen">
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
                     <div className="bg-office-colorful-surface overflow-hidden shadow-sm sm:rounded-lg p-6 border border-office-colorful-border dark:bg-office-black-surface dark:border-office-black-border">
                         <div className="flex justify-between items-center mb-6">
@@ -62,13 +64,17 @@ export default function Index({ auth, children }) {
                                             </td>
                                             <td className="px-5 py-5 border-b border-office-colorful-border text-sm dark:border-office-black-border text-office-colorful-subtext dark:text-office-black-subtext">{child.birth_date}</td>
                                             <td className="px-5 py-5 border-b border-office-colorful-border text-sm dark:border-office-black-border">
-                                                <Link href={route('nurse.children.edit', child.id)} className="text-office-colorful-ribbon hover:underline mr-4 dark:text-office-accent font-medium">Edit</Link>
-                                                <button
-                                                    onClick={() => handleDelete(child.id)}
-                                                    className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 font-medium"
-                                                >
-                                                    Delete
-                                                </button>
+                                                <div className="flex items-center gap-3">
+                                                    <Link href={route('nurse.children.edit', child.id)} className="text-office-colorful-ribbon hover:text-office-colorful-ribbon/80 dark:text-office-accent transition" title="Edit">
+                                                        <FontAwesomeIcon icon={faEdit} />
+                                                    </Link>
+                                                    <button
+                                                        onClick={() => handleDelete(child.id)}
+                                                        className="text-red-600 hover:text-red-900 dark:text-red-400 transition" title="Delete"
+                                                    >
+                                                        <FontAwesomeIcon icon={faTrash} />
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}

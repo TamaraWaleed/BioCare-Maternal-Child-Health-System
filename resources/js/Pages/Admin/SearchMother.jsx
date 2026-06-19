@@ -1,25 +1,25 @@
-/*import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, Link } from '@inertiajs/react';
 import AutoComplete from '@/Components/AutoComplete';
 import PrimaryButton from '@/Components/PrimaryButton';
 
-export default function Search({ auth, query, results }) {
+export default function SearchMother({ auth, query, results }) {
     const { data, setData, get, processing } = useForm({
         q: query || '',
     });
 
     const submit = (e) => {
         if (e) e.preventDefault();
-        get(route('doctor.search'));
+        get(route('admin.mothers.search'));
     };
 
     return (
         <AuthenticatedLayout
             user={auth.user}
-            header={<h2 className="font-semibold text-xl text-office-colorful-text dark:text-office-black-text leading-tight">Search Records</h2>}
-            breadcrumbs={[{ label: 'Search' }]}
+            header={<h2 className="font-semibold text-xl text-office-colorful-text dark:text-office-black-text leading-tight">Search Mothers</h2>}
+            breadcrumbs={[{ label: 'Search Mothers' }]}
         >
-            <Head title="Search Patients" />
+            <Head title="Search Mothers" />
 
             <div className="py-12 min-h-screen">
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
@@ -58,10 +58,10 @@ export default function Search({ auth, query, results }) {
                                                 </div>
                                                 <div>
                                                     <Link
-                                                        href={route('doctor.patients.show', patient.id)}
+                                                        href={route('admin.mothers.show', patient.id)}
                                                         className="inline-flex items-center shadow-sm px-2.5 py-0.5 border border-office-colorful-border text-sm leading-5 font-medium rounded-full text-office-colorful-text bg-office-colorful-surface hover:bg-office-colorful-bg dark:text-office-black-text dark:bg-office-black-surface dark:border-office-black-border dark:hover:bg-office-black-bg"
                                                     >
-                                                        View Details
+                                                        View Full Report
                                                     </Link>
                                                 </div>
                                             </div>
@@ -79,4 +79,3 @@ export default function Search({ auth, query, results }) {
         </AuthenticatedLayout>
     );
 }
-*/

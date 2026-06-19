@@ -18,14 +18,33 @@ Route::get('/', function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
 
-    Route::prefix('nurse')->middleware(['auth', 'role:nurse'])->group(function () {
-        Route::get('/dashboard', [\App\Http\Controllers\NurseController::class, 'dashboard'])->name('nurse.dashboard');
+    Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
+        Route::get('/dashboard', [\App\Http\Controllers\AdminController::class, 'dashboard'])->name('admin.dashboard');
         
         // User Management
-        Route::get('/users', [\App\Http\Controllers\NurseController::class, 'manageUsers'])->name('nurse.users.index');
-        Route::post('/users', [\App\Http\Controllers\NurseController::class, 'storeUser'])->name('nurse.users.store');
-        Route::put('/users/{user}', [\App\Http\Controllers\NurseController::class, 'updateUser'])->name('nurse.users.update');
-        Route::delete('/users/{user}', [\App\Http\Controllers\NurseController::class, 'deleteUser'])->name('nurse.users.delete');
+        Route::get('/users', [\App\Http\Controllers\AdminController::class, 'manageUsers'])->name('admin.users.index');
+        Route::post('/users', [\App\Http\Controllers\AdminController::class, 'storeUser'])->name('admin.users.store');
+        Route::put('/users/{user}', [\App\Http\Controllers\AdminController::class, 'updateUser'])->name('admin.users.update');
+        Route::delete('/users/{user}', [\App\Http\Controllers\AdminController::class, 'deleteUser'])->name('admin.users.delete');
+
+        // Mothers Search & Comprehensive View
+        Route::get('/search', [\App\Http\Controllers\AdminController::class, 'searchMother'])->name('admin.mothers.search');
+        Route::get('/mothers/{user}', [\App\Http\Controllers\AdminController::class, 'showMother'])->name('admin.mothers.show');
+
+        // Reports
+        Route::get('/reports/mothers', [\App\Http\Controllers\AdminController::class, 'mothersReport'])->name('admin.reports.mothers');
+    });
+
+    Route::prefix('nurse')->middleware(['auth', 'role:nurse,admin'])->group(function () {
+        Route::get('/dashboard', [\App\Http\Controllers\NurseController::class, 'dashboard'])->name('nurse.dashboard');
+        
+
+
+        // Mothers Management
+        Route::get('/mothers', [\App\Http\Controllers\NurseController::class, 'manageMothers'])->name('nurse.mothers.index');
+        Route::post('/mothers', [\App\Http\Controllers\NurseController::class, 'storeMother'])->name('nurse.mothers.store');
+        Route::put('/mothers/{user}', [\App\Http\Controllers\NurseController::class, 'updateMother'])->name('nurse.mothers.update');
+        Route::delete('/mothers/{user}', [\App\Http\Controllers\NurseController::class, 'deleteMother'])->name('nurse.mothers.delete');
 
         // Announcements (Ads)
         Route::get('/announcements', [\App\Http\Controllers\NurseController::class, 'announcements'])->name('nurse.announcements.index');

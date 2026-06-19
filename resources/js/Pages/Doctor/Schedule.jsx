@@ -12,8 +12,12 @@ import { useState } from 'react';
 import Swal from 'sweetalert2';
 
 export default function Schedule({ auth, appointments, mothers, doctors }) {
+    const today = new Date();
+    const todayDateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
     const [showEditModal, setShowEditModal] = useState(false);
     const [showDetailsModal, setShowDetailsModal] = useState(false);
+    const [showViewDetailsModal, setShowViewDetailsModal] = useState(false);
     const [selectedApt, setSelectedApt] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -32,7 +36,7 @@ export default function Schedule({ auth, appointments, mothers, doctors }) {
         mother_user_id: '',
         appointment_id: '',
         doctor_user_id: auth.user.id,
-        date: new Date().toISOString().split('T')[0],
+        date: todayDateStr,
         weight: '',
         blood_pressure: '',
         oedema: 'none',
@@ -45,11 +49,28 @@ export default function Schedule({ auth, appointments, mothers, doctors }) {
         complaint_management: '',
         supplements: '',
         next_visit: '',
-        next_doctor_user_id: '',
+        next_doctor_user_id: auth.user.id,
     });
 
     const submit = (e) => {
         e.preventDefault();
+
+        // Client-side date check
+        const selectedDate = new Date(data.appointment_date);
+        selectedDate.setHours(0, 0, 0, 0);
+        const todayLocal = new Date();
+        todayLocal.setHours(0, 0, 0, 0);
+
+        if (selectedDate < todayLocal) {
+            Swal.fire({
+                title: 'Invalid Date',
+                text: 'You cannot schedule an appointment for a past date.',
+                icon: 'warning',
+                confirmButtonColor: '#3085d6',
+            });
+            return;
+        }
+
         post(route('doctor.appointments.store'), {
             onSuccess: () => reset(),
         });
@@ -84,6 +105,23 @@ export default function Schedule({ auth, appointments, mothers, doctors }) {
 
     const handleUpdateAppointment = (e) => {
         e.preventDefault();
+
+        // Client-side date check
+        const selectedDate = new Date(editForm.data.appointment_date);
+        selectedDate.setHours(0, 0, 0, 0);
+        const todayLocal = new Date();
+        todayLocal.setHours(0, 0, 0, 0);
+
+        if (selectedDate < todayLocal) {
+            Swal.fire({
+                title: 'Invalid Date',
+                text: 'You cannot update an appointment to a past date.',
+                icon: 'warning',
+                confirmButtonColor: '#3085d6',
+            });
+            return;
+        }
+
         editForm.patch(route('doctor.appointments.update', selectedApt.id), {
             onSuccess: () => {
                 setShowEditModal(false);
@@ -98,14 +136,39 @@ export default function Schedule({ auth, appointments, mothers, doctors }) {
             ...detailsForm.data,
             mother_user_id: apt.mother_user_id,
             appointment_id: apt.id,
-            doctor_user_id: apt.doctor_user_id || auth.user.id,
+            doctor_user_id: auth.user.id,
             date: apt.appointment_date,
+            next_doctor_user_id: auth.user.id,
         });
         setShowDetailsModal(true);
     };
 
+    const openViewDetailsModal = (apt) => {
+        setSelectedApt(apt);
+        setShowViewDetailsModal(true);
+    };
+
     const handleStoreDetails = (e) => {
         e.preventDefault();
+
+        // Client-side next visit date check
+        if (detailsForm.data.next_visit) {
+            const nextVisitDate = new Date(detailsForm.data.next_visit);
+            nextVisitDate.setHours(0, 0, 0, 0);
+            const todayLocal = new Date();
+            todayLocal.setHours(0, 0, 0, 0);
+
+            if (nextVisitDate < todayLocal) {
+                Swal.fire({
+                    title: 'Invalid Next Visit Date',
+                    text: 'The next visit date cannot be in the past.',
+                    icon: 'warning',
+                    confirmButtonColor: '#3085d6',
+                });
+                return;
+            }
+        }
+
         detailsForm.post(route('doctor.antenatal.store'), {
             onSuccess: () => {
                 setShowDetailsModal(false);
@@ -116,7 +179,7 @@ export default function Schedule({ auth, appointments, mothers, doctors }) {
 
     const filteredAppointments = appointments.filter(apt =>
         (apt.mother?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        apt.mother_user_id.toString().includes(searchQuery)
+        (apt.appointment_date || '').includes(searchQuery)
     );
 
     return (
@@ -217,7 +280,7 @@ export default function Schedule({ auth, appointments, mothers, doctors }) {
                                 <input
                                     type="text"
                                     className="block w-full pl-10 pr-3 py-1.5 border border-gray-300 dark:border-office-black-border rounded-md leading-5 bg-white dark:bg-office-black-bg text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-office-colorful-ribbon dark:focus:ring-office-accent focus:border-office-colorful-ribbon dark:focus:border-office-accent sm:text-sm transition-all"
-                                    placeholder="Search by mother or ID..."
+                                    placeholder="Search by mother name or visit date..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                 />
@@ -270,7 +333,7 @@ export default function Schedule({ auth, appointments, mothers, doctors }) {
                                                 </td>
                                                 <td className="border border-gray-300 px-4 py-2 dark:border-office-black-border">
                                                     <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                                                        {apt.status !== 'completed' && (
+                                                        {apt.status !== 'completed' ? (
                                                             <>
                                                                 <button
                                                                     onClick={() => openEditModal(apt)}
@@ -281,23 +344,31 @@ export default function Schedule({ auth, appointments, mothers, doctors }) {
                                                                 </button>
                                                                 <button
                                                                     onClick={() => openDetailsModal(apt)}
-                                                                    disabled={apt.appointment_date > new Date().toISOString().split('T')[0]}
-                                                                    className={`py-1 px-3 rounded text-xs font-bold transition-colors ${apt.appointment_date <= new Date().toISOString().split('T')[0]
+                                                                    disabled={apt.appointment_date !== todayDateStr}
+                                                                    className={`py-1 px-3 rounded text-xs font-bold transition-colors ${apt.appointment_date === todayDateStr
                                                                         ? 'bg-green-600 hover:bg-green-700 text-office-surface dark:text-white'
                                                                         : 'bg-gray-400 cursor-not-allowed text-gray-200'
                                                                         }`}
-                                                                    title={apt.appointment_date <= new Date().toISOString().split('T')[0] ? "Add Antenatal Details" : "Details can only be added on or after the visit date"}
+                                                                    title={apt.appointment_date === todayDateStr ? "Add Antenatal Details" : "Details can only be added on the visit date"}
                                                                 >
                                                                     <FontAwesomeIcon icon={faInfoCircle} className="mr-1" /> Add Details
                                                                 </button>
+                                                                <button
+                                                                    onClick={() => handleDelete(apt.id)}
+                                                                    className="bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded text-xs font-bold transition-colors"
+                                                                >
+                                                                    Delete
+                                                                </button>
                                                             </>
+                                                        ) : (
+                                                            <button
+                                                                onClick={() => openViewDetailsModal(apt)}
+                                                                className="bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded text-xs font-bold transition-colors"
+                                                                title="View Examination Details"
+                                                            >
+                                                                <FontAwesomeIcon icon={faInfoCircle} className="mr-1" /> View Details
+                                                            </button>
                                                         )}
-                                                        <button
-                                                            onClick={() => handleDelete(apt.id)}
-                                                            className="bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded text-xs font-bold transition-colors"
-                                                        >
-                                                            Delete
-                                                        </button>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -464,6 +535,116 @@ export default function Schedule({ auth, appointments, mothers, doctors }) {
                         </PrimaryButton>
                     </div>
                 </form>
+            </Modal>
+
+            {/* View Antenatal Details Modal */}
+            <Modal show={showViewDetailsModal} onClose={() => setShowViewDetailsModal(false)} maxWidth="2xl">
+                <div className="p-6">
+                    <h2 className="text-lg font-medium text-gray-900 dark:text-white border-b pb-2 mb-4">
+                        Antenatal Examination Details - {selectedApt?.mother?.name}
+                    </h2>
+
+                    {selectedApt?.antenatal_record ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700 dark:text-gray-300">
+                            <div>
+                                <span className="font-semibold block text-xs uppercase text-gray-500 dark:text-office-black-subtext">Mother Name</span>
+                                <div className="mt-1 p-2 bg-gray-50 border border-gray-200 dark:bg-office-black-bg dark:border-office-black-border rounded dark:text-white">
+                                    {selectedApt.mother?.name || 'N/A'}
+                                </div>
+                            </div>
+                            <div>
+                                <span className="font-semibold block text-xs uppercase text-gray-500 dark:text-office-black-subtext">Mother Serial Num</span>
+                                <div className="mt-1 p-2 bg-gray-50 border border-gray-200 dark:bg-office-black-bg dark:border-office-black-border rounded font-mono dark:text-white">
+                                    {selectedApt.mother_user_id}
+                                </div>
+                            </div>
+                            <div>
+                                <span className="font-semibold block text-xs uppercase text-gray-500 dark:text-office-black-subtext">Visit Date</span>
+                                <div className="mt-1 p-2 bg-gray-50 border border-gray-200 dark:bg-office-black-bg dark:border-office-black-border rounded dark:text-white">
+                                    {selectedApt.appointment_date}
+                                </div>
+                            </div>
+                            <div>
+                                <span className="font-semibold block text-xs uppercase text-gray-500 dark:text-office-black-subtext">Doctor Name</span>
+                                <div className="mt-1 p-2 bg-gray-50 border border-gray-200 dark:bg-office-black-bg dark:border-office-black-border rounded dark:text-white">
+                                    {selectedApt.doctor?.name || 'N/A'}
+                                </div>
+                            </div>
+                            <div>
+                                <span className="font-semibold block text-xs uppercase text-gray-500 dark:text-office-black-subtext">Weight (kg)</span>
+                                <div className="mt-1 p-2 bg-gray-50 border border-gray-200 dark:bg-office-black-bg dark:border-office-black-border rounded dark:text-white">
+                                    {selectedApt.antenatal_record.weight || 'N/A'}
+                                </div>
+                            </div>
+                            <div>
+                                <span className="font-semibold block text-xs uppercase text-gray-500 dark:text-office-black-subtext">Blood Pressure</span>
+                                <div className="mt-1 p-2 bg-gray-50 border border-gray-200 dark:bg-office-black-bg dark:border-office-black-border rounded dark:text-white">
+                                    {selectedApt.antenatal_record.blood_pressure || 'N/A'}
+                                </div>
+                            </div>
+                            <div>
+                                <span className="font-semibold block text-xs uppercase text-gray-500 dark:text-office-black-subtext">Oedema</span>
+                                <div className="mt-1 p-2 bg-gray-50 border border-gray-200 dark:bg-office-black-bg dark:border-office-black-border rounded dark:text-white">
+                                    {selectedApt.antenatal_record.oedema || 'N/A'}
+                                </div>
+                            </div>
+                            <div>
+                                <span className="font-semibold block text-xs uppercase text-gray-500 dark:text-office-black-subtext">Urine Albumin</span>
+                                <div className="mt-1 p-2 bg-gray-50 border border-gray-200 dark:bg-office-black-bg dark:border-office-black-border rounded dark:text-white">
+                                    {selectedApt.antenatal_record.urine_alb || 'N/A'}
+                                </div>
+                            </div>
+                            <div>
+                                <span className="font-semibold block text-xs uppercase text-gray-500 dark:text-office-black-subtext">Urine Sugar</span>
+                                <div className="mt-1 p-2 bg-gray-50 border border-gray-200 dark:bg-office-black-bg dark:border-office-black-border rounded dark:text-white">
+                                    {selectedApt.antenatal_record.urine_sug || 'N/A'}
+                                </div>
+                            </div>
+                            <div>
+                                <span className="font-semibold block text-xs uppercase text-gray-500 dark:text-office-black-subtext">Fetal Heartbeat</span>
+                                <div className="mt-1 p-2 bg-gray-50 border border-gray-200 dark:bg-office-black-bg dark:border-office-black-border rounded dark:text-white">
+                                    {selectedApt.antenatal_record.fetal_heartbeat || 'N/A'}
+                                </div>
+                            </div>
+                            <div>
+                                <span className="font-semibold block text-xs uppercase text-gray-500 dark:text-office-black-subtext">Gestational Age (Date)</span>
+                                <div className="mt-1 p-2 bg-gray-50 border border-gray-200 dark:bg-office-black-bg dark:border-office-black-border rounded dark:text-white">
+                                    {selectedApt.antenatal_record.gestational_age_date || 'N/A'}
+                                </div>
+                            </div>
+                            <div>
+                                <span className="font-semibold block text-xs uppercase text-gray-500 dark:text-office-black-subtext">Gestational Age (Size)</span>
+                                <div className="mt-1 p-2 bg-gray-50 border border-gray-200 dark:bg-office-black-bg dark:border-office-black-border rounded dark:text-white">
+                                    {selectedApt.antenatal_record.gestational_age_size || 'N/A'}
+                                </div>
+                            </div>
+                            <div>
+                                <span className="font-semibold block text-xs uppercase text-gray-500 dark:text-office-black-subtext">Presentation</span>
+                                <div className="mt-1 p-2 bg-gray-50 border border-gray-200 dark:bg-office-black-bg dark:border-office-black-border rounded dark:text-white">
+                                    {selectedApt.antenatal_record.presentation || 'N/A'}
+                                </div>
+                            </div>
+                            <div>
+                                <span className="font-semibold block text-xs uppercase text-gray-500 dark:text-office-black-subtext">Supplements</span>
+                                <div className="mt-1 p-2 bg-gray-50 border border-gray-200 dark:bg-office-black-bg dark:border-office-black-border rounded dark:text-white">
+                                    {selectedApt.antenatal_record.supplements || 'N/A'}
+                                </div>
+                            </div>
+                            <div className="md:col-span-2">
+                                <span className="font-semibold block text-xs uppercase text-gray-500 dark:text-office-black-subtext">Complaint & Management</span>
+                                <div className="mt-1 p-2 bg-gray-50 border border-gray-200 dark:bg-office-black-bg dark:border-office-black-border rounded min-h-[60px] whitespace-pre-wrap dark:text-white">
+                                    {selectedApt.antenatal_record.complaint_management || 'N/A'}
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <p className="text-gray-500 dark:text-gray-400 italic text-center py-4">No examination details recorded for this completed visit.</p>
+                    )}
+
+                    <div className="mt-6 flex justify-end">
+                        <SecondaryButton onClick={() => setShowViewDetailsModal(false)}>Close</SecondaryButton>
+                    </div>
+                </div>
             </Modal>
         </AuthenticatedLayout >
     );

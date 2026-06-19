@@ -13,6 +13,7 @@ export default function UpdateProfileInformation({
     doctorProfile = null,
     nurseProfile = null,
     motherProfile = null,
+    adminProfile = null,
 }) {
     const user = usePage().props.auth.user;
 
@@ -20,8 +21,8 @@ export default function UpdateProfileInformation({
         useForm({
             name: user.name,
             email: user.email,
-            phone: doctorProfile?.phone || nurseProfile?.phone || motherProfile?.phone || '',
-            city: doctorProfile?.city || nurseProfile?.city || motherProfile?.city || '',
+            phone: doctorProfile?.phone || nurseProfile?.phone || motherProfile?.phone || adminProfile?.phone || '',
+            city: doctorProfile?.city || nurseProfile?.city || motherProfile?.city || adminProfile?.city || '',
             birth_date: motherProfile?.birth_date || '',
             blood_group: motherProfile?.blood_group || '',
             rh_factor: motherProfile?.rh_factor || '',
@@ -35,7 +36,7 @@ export default function UpdateProfileInformation({
             password_confirmation: '',
         });
 
-    const [preview, setPreview] = useState(doctorProfile?.photo_path || nurseProfile?.photo_path || motherProfile?.photo_path || null);
+    const [preview, setPreview] = useState(doctorProfile?.photo_path || nurseProfile?.photo_path || motherProfile?.photo_path || adminProfile?.photo_path || null);
 
     const submit = (e) => {
         e.preventDefault();
@@ -66,8 +67,8 @@ export default function UpdateProfileInformation({
     const isDoctor = user.role === 'doctor';
     const isNurse = user.role === 'nurse';
     const isMother = user.role === 'mother';
-    const isAdmin = isNurse;
-    const isLegacy = isDoctor || isNurse || isMother;
+    const isAdmin = user.role === 'admin';
+    const isLegacy = isDoctor || isNurse || isMother || isAdmin;
 
     return (
         <section className={className}>
@@ -107,7 +108,7 @@ export default function UpdateProfileInformation({
                             )}
 
                             <div className={isLegacy ? "flex items-center" : ""}>
-                                <InputLabel htmlFor="name" value={isNurse ? "Admin Name:" : (isDoctor ? "Doctor Name:" : (isMother ? "Mother Name:" : "Name"))} className={isLegacy ? "w-48" : ""} />
+                                <InputLabel htmlFor="name" value={isAdmin ? "Admin Name:" : (isNurse ? "Nurse Name:" : (isDoctor ? "Doctor Name:" : (isMother ? "Mother Name:" : "Name")))} className={isLegacy ? "w-48" : ""} />
                                 <div className="flex-1">
                                     <TextInput
                                         id="name"
@@ -275,7 +276,7 @@ export default function UpdateProfileInformation({
                             )}
                         </div>
 
-                        {(isDoctor || isMother || isNurse) && (
+                        {(isDoctor || isMother || isNurse || isAdmin) && (
                             <div className="md:col-span-4 flex flex-col items-center gap-4">
                                 <div className="flex items-center gap-2 self-start md:self-auto">
                                     <label className="text-sm font-medium text-gray-700 dark:text-office-black-subtext">Photo:</label>
